@@ -2,7 +2,15 @@
   "name": "usdx-stablecoin",
   "version": "1.0.0",
   "description": "Enterprise-grade stablecoin smart contract system with ERC-20 + ERC-1404 compliance",
-  "keywords": ["stablecoin", "erc-20", "erc-1404", "defi", "blockchain", "ethereum", "smart-contracts"],
+  "keywords": [
+    "stablecoin",
+    "erc-20",
+    "erc-1404",
+    "defi",
+    "blockchain",
+    "ethereum",
+    "smart-contracts"
+  ],
   "homepage": "https://github.com/vipwzw/usdx",
   "repository": {
     "type": "git",
@@ -22,7 +30,6 @@
     "install-all": "npm install && cd contracts && npm install",
     "clean": "npm run clean-contracts",
     "clean-all": "npm run clean-contracts && rm -rf node_modules",
-    
     "contracts:compile": "cd contracts && npm run compile",
     "contracts:test": "cd contracts && npm test",
     "contracts:coverage": "cd contracts && npm run coverage",
@@ -31,30 +38,22 @@
     "contracts:size": "cd contracts && npm run size",
     "contracts:gas": "cd contracts && REPORT_GAS=true npm test",
     "contracts:clean": "cd contracts && npm run clean",
-    
     "deploy:local": "cd contracts && npm run deploy:local",
     "deploy:goerli": "cd contracts && npm run deploy:goerli",
     "deploy:mainnet": "cd contracts && npm run deploy:mainnet",
-    
     "verify:goerli": "cd contracts && npm run verify:goerli",
     "verify:mainnet": "cd contracts && npm run verify:mainnet",
-    
     "test": "npm run contracts:test",
     "test:coverage": "npm run contracts:coverage",
     "test:watch": "cd contracts && npm run test:watch",
-    
     "lint": "npm run contracts:lint",
     "lint:fix": "npm run contracts:lint:fix",
-    
     "build": "npm run contracts:compile",
     "start": "cd contracts && npm run node",
-    
     "docs:build": "cd contracts && npm run docs",
     "docs:serve": "cd contracts && npm run docs:serve",
-    
     "security:analyze": "cd contracts && npm run security",
     "security:audit": "cd contracts && npm audit && npm run security:analyze",
-    
     "prepare": "husky install || true",
     "precommit": "npm run lint && npm run test",
     "prepush": "npm run test:coverage"
@@ -64,7 +63,10 @@
     "npm": ">=8.0.0"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/parser": "^8.36.0",
+    "eslint-plugin-node": "^11.1.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0"
   }
-} 
+}

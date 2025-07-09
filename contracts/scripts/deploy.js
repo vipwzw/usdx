@@ -3,7 +3,7 @@ const { parseEther, formatEther } = ethers.utils;
 
 async function main() {
   const [deployer] = await ethers.getSigners();
-  
+
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", formatEther(await deployer.getBalance()));
 
@@ -13,15 +13,15 @@ async function main() {
     tokenName: process.env.TOKEN_NAME || "USD Tether",
     tokenSymbol: process.env.TOKEN_SYMBOL || "USDT",
     initialSupply: process.env.INITIAL_SUPPLY || parseEther("1000000000"), // 1B tokens
-    
+
     // Governance configuration
-    initialGovernors: process.env.INITIAL_GOVERNORS 
-      ? process.env.INITIAL_GOVERNORS.split(",") 
+    initialGovernors: process.env.INITIAL_GOVERNORS
+      ? process.env.INITIAL_GOVERNORS.split(",")
       : [deployer.address],
     requiredVotes: parseInt(process.env.REQUIRED_VOTES) || 1,
     votingPeriod: parseInt(process.env.VOTING_PERIOD) || 86400, // 24 hours
     executionDelay: parseInt(process.env.EXECUTION_DELAY) || 3600, // 1 hour
-    
+
     // Initial roles
     initialOwner: process.env.INITIAL_OWNER || deployer.address,
     initialAdmin: process.env.INITIAL_ADMIN || deployer.address,
@@ -42,29 +42,27 @@ async function main() {
   // Deploy USDT Token
   console.log("\n=== Deploying USDT Token ===");
   const USDTToken = await ethers.getContractFactory("USDTToken");
-  
+
   const usdtToken = await upgrades.deployProxy(
     USDTToken,
-    [
-      config.tokenName,
-      config.tokenSymbol,
-      config.initialSupply,
-      config.initialOwner
-    ],
+    [config.tokenName, config.tokenSymbol, config.initialSupply, config.initialOwner],
     {
       initializer: "initialize",
       kind: "uups",
-    }
+    },
   );
 
   await usdtToken.deployed();
   console.log("USDT Token deployed to:", usdtToken.address);
-  console.log("USDT Token implementation:", await upgrades.erc1967.getImplementationAddress(usdtToken.address));
+  console.log(
+    "USDT Token implementation:",
+    await upgrades.erc1967.getImplementationAddress(usdtToken.address),
+  );
 
   // Deploy Governance Contract
   console.log("\n=== Deploying Governance Contract ===");
   const USDTGovernance = await ethers.getContractFactory("USDTGovernance");
-  
+
   const governance = await upgrades.deployProxy(
     USDTGovernance,
     [
@@ -72,21 +70,24 @@ async function main() {
       config.initialGovernors,
       config.requiredVotes,
       config.votingPeriod,
-      config.executionDelay
+      config.executionDelay,
     ],
     {
       initializer: "initialize",
       kind: "uups",
-    }
+    },
   );
 
   await governance.deployed();
   console.log("Governance deployed to:", governance.address);
-  console.log("Governance implementation:", await upgrades.erc1967.getImplementationAddress(governance.address));
+  console.log(
+    "Governance implementation:",
+    await upgrades.erc1967.getImplementationAddress(governance.address),
+  );
 
   // Set up initial roles and permissions
   console.log("\n=== Setting up roles and permissions ===");
-  
+
   // Grant roles to specified addresses
   const MINTER_ROLE = await usdtToken.MINTER_ROLE();
   const BURNER_ROLE = await usdtToken.BURNER_ROLE();
@@ -127,18 +128,18 @@ async function main() {
   const tokenDecimals = await usdtToken.decimals();
   const totalSupply = await usdtToken.totalSupply();
   const ownerBalance = await usdtToken.balanceOf(config.initialOwner);
-  
+
   console.log("Token Name:", tokenName);
   console.log("Token Symbol:", tokenSymbol);
   console.log("Token Decimals:", tokenDecimals);
   console.log("Total Supply:", formatEther(totalSupply));
   console.log("Owner Balance:", formatEther(ownerBalance));
-  
+
   // Verify governance setup
   const governorCount = await governance.getGovernorCount();
   const governors = await governance.getGovernors();
   const requiredVotesCheck = await governance.requiredVotes();
-  
+
   console.log("Governor Count:", governorCount.toString());
   console.log("Governors:", governors);
   console.log("Required Votes:", requiredVotesCheck.toString());
@@ -147,14 +148,14 @@ async function main() {
   console.log("\n=== Testing ERC-1404 functionality ===");
   const testAddress = "0x1234567890123456789012345678901234567890";
   const testAmount = parseEther("1000");
-  
+
   const restrictionCode = await usdtToken.detectTransferRestriction(
     config.initialOwner,
     testAddress,
-    testAmount
+    testAmount,
   );
   const restrictionMessage = await usdtToken.messageForTransferRestriction(restrictionCode);
-  
+
   console.log("Transfer restriction code:", restrictionCode);
   console.log("Transfer restriction message:", restrictionMessage);
 
@@ -192,13 +193,13 @@ async function main() {
   console.log("1. Verify contracts on Etherscan:");
   console.log(`   npx hardhat verify --network ${hre.network.name} ${usdtToken.address}`);
   console.log(`   npx hardhat verify --network ${hre.network.name} ${governance.address}`);
-  
+
   console.log("\n2. Update frontend configuration with contract addresses");
   console.log("\n3. Test governance functionality:");
   console.log("   - Create test proposals");
   console.log("   - Vote on proposals");
   console.log("   - Execute proposals");
-  
+
   console.log("\n4. Set up monitoring and alerts for:");
   console.log("   - Large transfers");
   console.log("   - Blacklist events");
@@ -210,7 +211,7 @@ async function main() {
 
 main()
   .then(() => process.exit(0))
-  .catch((error) => {
+  .catch(error => {
     console.error(error);
     process.exit(1);
-  }); 
+  });

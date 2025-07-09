@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("Integration Tests", function () {
+describe("Integration Tests", () => {
   let usdxToken;
   let governance;
   let owner, governor1, governor2, governor3, user1, user2, minter, blacklister, pauser, compliance;
@@ -12,15 +12,26 @@ describe("Integration Tests", function () {
   const VOTING_PERIOD = 86400; // 24 hours
   const EXECUTION_DELAY = 3600; // 1 hour
 
-  beforeEach(async function () {
-    [owner, governor1, governor2, governor3, user1, user2, minter, blacklister, pauser, compliance] = await ethers.getSigners();
+  beforeEach(async () => {
+    [
+      owner,
+      governor1,
+      governor2,
+      governor3,
+      user1,
+      user2,
+      minter,
+      blacklister,
+      pauser,
+      compliance,
+    ] = await ethers.getSigners();
 
     // Deploy USDX Token
     const USDXToken = await ethers.getContractFactory("USDXToken");
     usdxToken = await upgrades.deployProxy(
       USDXToken,
       [TOKEN_NAME, TOKEN_SYMBOL, INITIAL_SUPPLY, owner.address],
-      { initializer: "initialize", kind: "uups" }
+      { initializer: "initialize", kind: "uups" },
     );
 
     // Deploy Governance Contract
@@ -32,9 +43,9 @@ describe("Integration Tests", function () {
         [governor1.address, governor2.address, governor3.address],
         2, // Required votes
         VOTING_PERIOD,
-        EXECUTION_DELAY
+        EXECUTION_DELAY,
       ],
-      { initializer: "initialize", kind: "uups" }
+      { initializer: "initialize", kind: "uups" },
     );
 
     // Set up roles
@@ -70,8 +81,8 @@ describe("Integration Tests", function () {
     await usdxToken.setKYCVerified(compliance.address, true);
   });
 
-  describe("Governance-Controlled Token Operations", function () {
-    it("Should allow governance to mint tokens through proposal", async function () {
+  describe("Governance-Controlled Token Operations", () => {
+    it("Should allow governance to mint tokens through proposal", async () => {
       const mintAmount = ethers.parseUnits("1000000", 6); // 1M tokens
       const targetAddress = await usdxToken.getAddress();
       const value = 0;
@@ -79,7 +90,9 @@ describe("Integration Tests", function () {
       const description = "Mint 1M tokens to user1";
 
       // Create proposal
-      const tx = await governance.connect(governor1).propose(targetAddress, value, data, description);
+      const tx = await governance
+        .connect(governor1)
+        .propose(targetAddress, value, data, description);
       const receipt = await tx.wait();
       const proposalId = receipt.logs[0].args.proposalId;
 
@@ -99,14 +112,16 @@ describe("Integration Tests", function () {
       expect(balanceAfter - balanceBefore).to.equal(mintAmount);
     });
 
-    it("Should allow governance to blacklist addresses through proposal", async function () {
+    it("Should allow governance to blacklist addresses through proposal", async () => {
       const targetAddress = await usdxToken.getAddress();
       const value = 0;
       const data = usdxToken.interface.encodeFunctionData("setBlacklisted", [user1.address, true]);
       const description = "Blacklist user1";
 
       // Create and execute proposal
-      const tx = await governance.connect(governor1).propose(targetAddress, value, data, description);
+      const tx = await governance
+        .connect(governor1)
+        .propose(targetAddress, value, data, description);
       const receipt = await tx.wait();
       const proposalId = receipt.logs[0].args.proposalId;
 
@@ -121,14 +136,16 @@ describe("Integration Tests", function () {
       expect(await usdxToken.isBlacklisted(user1.address)).to.be.true;
     });
 
-    it("Should allow governance to pause token contract through proposal", async function () {
+    it("Should allow governance to pause token contract through proposal", async () => {
       const targetAddress = await usdxToken.getAddress();
       const value = 0;
       const data = usdxToken.interface.encodeFunctionData("pause", []);
       const description = "Pause token contract";
 
       // Create and execute proposal
-      const tx = await governance.connect(governor1).propose(targetAddress, value, data, description);
+      const tx = await governance
+        .connect(governor1)
+        .propose(targetAddress, value, data, description);
       const receipt = await tx.wait();
       const proposalId = receipt.logs[0].args.proposalId;
 
@@ -144,8 +161,8 @@ describe("Integration Tests", function () {
     });
   });
 
-  describe("End-to-End Token Lifecycle", function () {
-    it("Should handle complete token lifecycle", async function () {
+  describe("End-to-End Token Lifecycle", () => {
+    it("Should handle complete token lifecycle", async () => {
       const mintAmount = ethers.parseUnits("1000000", 6); // 1M tokens
 
       // Step 1: Mint tokens
@@ -164,13 +181,13 @@ describe("Integration Tests", function () {
       const restrictionCode = await usdxToken.detectTransferRestriction(
         user1.address,
         user2.address,
-        transferAmount
+        transferAmount,
       );
       expect(restrictionCode).to.equal(2); // BLACKLISTED_SENDER
 
       // Step 5: Attempt blocked transfer
       await expect(
-        usdxToken.connect(user1).transfer(user2.address, transferAmount)
+        usdxToken.connect(user1).transfer(user2.address, transferAmount),
       ).to.be.revertedWith("Sender address is blacklisted");
 
       // Step 6: Remove from blacklist
@@ -181,7 +198,7 @@ describe("Integration Tests", function () {
       expect(await usdxToken.balanceOf(user2.address)).to.equal(transferAmount * 2n);
     });
 
-    it("Should handle emergency pause scenario", async function () {
+    it("Should handle emergency pause scenario", async () => {
       const mintAmount = ethers.parseUnits("1000000", 6);
 
       // Set up initial state
@@ -193,12 +210,12 @@ describe("Integration Tests", function () {
       // Verify all transfers are blocked
       const transferAmount = ethers.parseUnits("100000", 6);
       await expect(
-        usdxToken.connect(user1).transfer(user2.address, transferAmount)
+        usdxToken.connect(user1).transfer(user2.address, transferAmount),
       ).to.be.revertedWith("ERC20Pausable: token transfer while paused");
 
       // Verify minting is blocked
       await expect(
-        usdxToken.connect(minter).mint(user2.address, transferAmount)
+        usdxToken.connect(minter).mint(user2.address, transferAmount),
       ).to.be.revertedWith("ERC20Pausable: token transfer while paused");
 
       // Unpause and verify normal operations
@@ -208,8 +225,8 @@ describe("Integration Tests", function () {
     });
   });
 
-  describe("Governance-Controlled Upgrades", function () {
-    it("Should allow governance to upgrade token contract", async function () {
+  describe("Governance-Controlled Upgrades", () => {
+    it("Should allow governance to upgrade token contract", async () => {
       // Deploy new implementation (same contract, just testing upgrade mechanism)
       const USDXTokenV2 = await ethers.getContractFactory("USDXToken");
       const newImplementation = await USDXTokenV2.deploy();
@@ -219,11 +236,13 @@ describe("Integration Tests", function () {
       const targetAddress = await usdxToken.getAddress();
       const value = 0;
       const data = usdxToken.interface.encodeFunctionData("upgradeTo", [
-        await newImplementation.getAddress()
+        await newImplementation.getAddress(),
       ]);
       const description = "Upgrade USDX token contract";
 
-      const tx = await governance.connect(governor1).propose(targetAddress, value, data, description);
+      const tx = await governance
+        .connect(governor1)
+        .propose(targetAddress, value, data, description);
       const receipt = await tx.wait();
       const proposalId = receipt.logs[0].args.proposalId;
 
@@ -243,15 +262,15 @@ describe("Integration Tests", function () {
     });
   });
 
-  describe("Compliance and Restrictions", function () {
-    beforeEach(async function () {
-      // Set up tokens 
+  describe("Compliance and Restrictions", () => {
+    beforeEach(async () => {
+      // Set up tokens
       const mintAmount = ethers.parseUnits("1000000", 6);
       await usdxToken.connect(minter).mint(user1.address, mintAmount);
       await usdxToken.connect(minter).mint(user2.address, mintAmount);
     });
 
-    it("Should enforce daily transfer limits", async function () {
+    it("Should enforce daily transfer limits", async () => {
       const dailyLimit = ethers.parseUnits("50000", 6); // 50K tokens
       const transferAmount = ethers.parseUnits("30000", 6); // 30K tokens
 
@@ -263,7 +282,7 @@ describe("Integration Tests", function () {
 
       // Second transfer should succeed (total: 60K, exceeds 50K limit)
       await expect(
-        usdxToken.connect(user1).transfer(user2.address, transferAmount)
+        usdxToken.connect(user1).transfer(user2.address, transferAmount),
       ).to.be.revertedWith("Amount exceeds transfer limit");
 
       // Smaller transfer should succeed (total would be 40K)
@@ -271,7 +290,7 @@ describe("Integration Tests", function () {
       await usdxToken.connect(user1).transfer(user2.address, smallTransferAmount);
     });
 
-    it("Should reset daily limits after 24 hours", async function () {
+    it("Should reset daily limits after 24 hours", async () => {
       const dailyLimit = ethers.parseUnits("50000", 6);
       const transferAmount = ethers.parseUnits("30000", 6);
 
@@ -290,57 +309,54 @@ describe("Integration Tests", function () {
 
       // Transfer should succeed after limit reset
       await usdxToken.connect(user1).transfer(user3.address, transferAmount);
-      expect(await usdxToken.balanceOf(user3.address)).to.equal(transferAmount + ethers.parseUnits("100000", 6));
+      expect(await usdxToken.balanceOf(user3.address)).to.equal(
+        transferAmount + ethers.parseUnits("100000", 6),
+      );
     });
 
-    it("Should handle KYC requirements", async function () {
+    it("Should handle KYC requirements", async () => {
       // Remove KYC verification
       await usdxToken.connect(compliance).setKYCVerified(user2.address, false);
 
       // Transfer should fail
       const transferAmount = ethers.parseUnits("10000", 6);
       await expect(
-        usdxToken.connect(user1).transfer(user2.address, transferAmount)
+        usdxToken.connect(user1).transfer(user2.address, transferAmount),
       ).to.be.revertedWith("Receiver KYC verification required");
     });
 
-    it("Should handle sanctions", async function () {
+    it("Should handle sanctions", async () => {
       // Sanction user1
       await usdxToken.connect(compliance).setSanctioned(user1.address, true);
 
       // Transfer should fail
       const transferAmount = ethers.parseUnits("10000", 6);
       await expect(
-        usdxToken.connect(user1).transfer(user2.address, transferAmount)
+        usdxToken.connect(user1).transfer(user2.address, transferAmount),
       ).to.be.revertedWith("Address is sanctioned");
     });
   });
 
-  describe("Security and Edge Cases", function () {
-    it("Should handle role-based access control", async function () {
+  describe("Security and Edge Cases", () => {
+    it("Should handle role-based access control", async () => {
       // Non-minter should not be able to mint
-      await expect(
-        usdxToken.connect(user1).mint(user2.address, ethers.parseUnits("1000", 6))
-      ).to.be.reverted;
+      await expect(usdxToken.connect(user1).mint(user2.address, ethers.parseUnits("1000", 6))).to.be
+        .reverted;
 
       // Non-blacklister should not be able to blacklist
-      await expect(
-        usdxToken.connect(user1).setBlacklisted(user2.address, true)
-      ).to.be.reverted;
+      await expect(usdxToken.connect(user1).setBlacklisted(user2.address, true)).to.be.reverted;
 
       // Non-pauser should not be able to pause
-      await expect(
-        usdxToken.connect(user1).pause()
-      ).to.be.reverted;
+      await expect(usdxToken.connect(user1).pause()).to.be.reverted;
     });
 
-    it("Should prevent zero address operations", async function () {
+    it("Should prevent zero address operations", async () => {
       await expect(
-        usdxToken.connect(minter).mint(ethers.ZeroAddress, ethers.parseUnits("1000", 6))
+        usdxToken.connect(minter).mint(ethers.ZeroAddress, ethers.parseUnits("1000", 6)),
       ).to.be.revertedWith("Cannot mint to zero address");
     });
 
-    it("Should handle burn operations correctly", async function () {
+    it("Should handle burn operations correctly", async () => {
       // Mint tokens first
       const mintAmount = ethers.parseUnits("1000000", 6);
       await usdxToken.connect(minter).mint(user1.address, mintAmount);
@@ -353,30 +369,27 @@ describe("Integration Tests", function () {
     });
   });
 
-  describe("Events and Monitoring", function () {
-    it("Should emit correct events for token operations", async function () {
+  describe("Events and Monitoring", () => {
+    it("Should emit correct events for token operations", async () => {
       const mintAmount = ethers.parseUnits("1000000", 6);
 
       // Mint should emit Transfer event
-      await expect(
-        usdxToken.connect(minter).mint(user1.address, mintAmount)
-      ).to.emit(usdxToken, "Transfer")
+      await expect(usdxToken.connect(minter).mint(user1.address, mintAmount))
+        .to.emit(usdxToken, "Transfer")
         .withArgs(ethers.ZeroAddress, user1.address, mintAmount);
 
       // Blacklist should emit BlacklistUpdated event
-      await expect(
-        usdxToken.connect(blacklister).setBlacklisted(user1.address, true)
-      ).to.emit(usdxToken, "BlacklistUpdated")
+      await expect(usdxToken.connect(blacklister).setBlacklisted(user1.address, true))
+        .to.emit(usdxToken, "BlacklistUpdated")
         .withArgs(user1.address, true);
 
       // KYC should emit KYCStatusUpdated event
-      await expect(
-        usdxToken.connect(compliance).setKYCVerified(user1.address, false)
-      ).to.emit(usdxToken, "KYCStatusUpdated")
+      await expect(usdxToken.connect(compliance).setKYCVerified(user1.address, false))
+        .to.emit(usdxToken, "KYCStatusUpdated")
         .withArgs(user1.address, false);
     });
 
-    it("Should emit correct events for governance operations", async function () {
+    it("Should emit correct events for governance operations", async () => {
       const targetAddress = await usdxToken.getAddress();
       const value = 0;
       const data = usdxToken.interface.encodeFunctionData("pause", []);
@@ -384,18 +397,19 @@ describe("Integration Tests", function () {
 
       // Proposal creation should emit ProposalCreated event
       await expect(
-        governance.connect(governor1).propose(targetAddress, value, data, description)
+        governance.connect(governor1).propose(targetAddress, value, data, description),
       ).to.emit(governance, "ProposalCreated");
 
       // Vote should emit VoteCast event
-      const tx = await governance.connect(governor1).propose(targetAddress, value, data, description);
+      const tx = await governance
+        .connect(governor1)
+        .propose(targetAddress, value, data, description);
       const receipt = await tx.wait();
       const proposalId = receipt.logs[0].args.proposalId;
 
-      await expect(
-        governance.connect(governor1).castVote(proposalId, true)
-      ).to.emit(governance, "VoteCast")
+      await expect(governance.connect(governor1).castVote(proposalId, true))
+        .to.emit(governance, "VoteCast")
         .withArgs(proposalId, governor1.address, true);
     });
   });
-}); 
+});
