@@ -1,0 +1,64 @@
+name: Local Test
+
+on: [push, pull_request]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  local-test:
+    name: Local Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        # 移除缓存配置，避免本地测试时路径问题
+
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm install
+
+    - name: Compile contracts
+      run: |
+        cd contracts
+        npx hardhat compile
+
+    - name: Run tests
+      run: |
+        cd contracts
+        npx hardhat test
+
+  local-lint:
+    name: Local Lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm install
+
+    - name: Run Solidity linter
+      run: |
+        cd contracts
+        npx solhint 'src/**/*.sol' || true
+
+    - name: Run JavaScript linter
+      run: |
+        cd contracts
+        npx eslint 'test/**/*.js' 'scripts/**/*.js' --format=compact || true
