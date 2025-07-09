@@ -1,0 +1,34 @@
+# USDT Stablecoin Project Structure
+
+This project follows a modular architecture with clear separation of concerns. Key documents:
+- [PROJECT_REQUIREMENTS.md](mdc:PROJECT_REQUIREMENTS.md) - Complete project requirements
+- [PROJECT_RULES.md](mdc:PROJECT_RULES.md) - Development rules and standards
+- [README.md](mdc:README.md) - Project overview and quick start
+
+## Directory Structure
+
+```
+usdt/
+├── contracts/              # Smart contracts (Solidity)
+├── backend/                # API services (Golang)
+├── frontend/               # Admin dashboard (React + TypeScript)
+├── infrastructure/         # Infrastructure as code
+├── docs/                   # Documentation
+└── scripts/                # Project utilities
+```
+
+## Key Principles
+
+1. **Microservices Architecture**: Each component is independently deployable
+2. **Security First**: All components must follow security best practices
+3. **Compliance Ready**: Built-in KYC/AML and regulatory compliance
+4. **Upgradeable**: Smart contracts use proxy pattern for upgrades
+5. **Auditable**: Complete audit trails for all operations
+
+## Reference Architecture
+
+This project implements a USDC-like stablecoin with:
+- ERC-20 compatible smart contract with additional controls
+- Multi-signature governance for critical operations
+- Comprehensive admin dashboard for operations
+- Real-time transaction monitoring and compliance checking

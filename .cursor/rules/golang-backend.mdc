@@ -1,0 +1,166 @@
+# Golang Backend Development Rules
+
+## Project Structure
+```
+backend/
+├── cmd/                    # Application entry points
+│   └── server/            # Main server application
+├── internal/              # Private application code
+│   ├── api/              # API handlers and routes
+│   ├── service/          # Business logic
+│   ├── repository/       # Data access layer
+│   ├── model/           # Data models
+│   └── config/          # Configuration
+├── pkg/                  # Public library code
+├── migrations/           # Database migrations
+└── scripts/             # Build and utility scripts
+```
+
+## Naming Conventions
+- **Packages**: lowercase, single words (e.g., `user`, `transaction`, `auth`)
+- **Files**: lowercase with underscores (e.g., `user_service.go`, `transaction_handler.go`)
+- **Types**: PascalCase (e.g., `UserAccount`, `TransactionLog`)
+- **Functions**: PascalCase for exported, camelCase for private
+- **Constants**: PascalCase or UPPER_SNAKE_CASE for package-level
+
+## API Design Standards
+```go
+// Standard API response format
+type APIResponse struct {
+    Success   bool        `json:"success"`
+    Data      interface{} `json:"data,omitempty"`
+    Message   string      `json:"message,omitempty"`
+    Timestamp int64       `json:"timestamp"`
+    RequestID string      `json:"request_id"`
+}
+
+// Error response
+type ErrorResponse struct {
+    Code    int    `json:"code"`
+    Message string `json:"message"`
+    Details string `json:"details,omitempty"`
+}
+```
+
+## Database Conventions
+- **Use GORM** as the primary ORM
+- **Table names**: snake_case (e.g., `user_accounts`, `transaction_logs`)
+- **Column names**: snake_case with db tags
+- **Always include audit fields**: `CreatedAt`, `UpdatedAt`
+
+```go
+type BaseModel struct {
+    ID        uint      `gorm:"primarykey" json:"id"`
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
+
+type UserAccount struct {
+    BaseModel
+    Address     string `gorm:"uniqueIndex;not null" json:"address"`
+    IsBlacklisted bool `gorm:"default:false" json:"is_blacklisted"`
+}
+```
+
+## Error Handling
+```go
+// Custom error types
+type AppError struct {
+    Code    int    `json:"code"`
+    Message string `json:"message"`
+    Err     error  `json:"-"`
+}
+
+func (e *AppError) Error() string {
+    return e.Message
+}
+
+// Error codes
+const (
+    // System errors (10xxx)
+    ErrSystemError   = 10001
+    ErrDatabaseError = 10002
+    
+    // Business errors (20xxx)
+    ErrInsufficientBalance = 20001
+    ErrInvalidAddress     = 20002
+    ErrBlacklistedAddress = 20003
+    
+    // Auth errors (30xxx)
+    ErrUnauthorized = 30001
+    ErrForbidden    = 30002
+)
+```
+
+## Security Requirements
+- **ALWAYS validate input** using struct tags and validation libraries
+- **ALWAYS use parameterized queries** with GORM
+- **ALWAYS implement rate limiting** using middleware
+- **ALWAYS log security events** for audit trails
+
+```go
+// Input validation example
+type MintRequest struct {
+    Address string  `json:"address" validate:"required,eth_addr"`
+    Amount  float64 `json:"amount" validate:"required,gt=0"`
+}
+```
+
+## Logging Standards
+```go
+// Use structured logging (logrus or zap)
+import "github.com/sirupsen/logrus"
+
+// Log entry structure
+type LogEntry struct {
+    Timestamp string                 `json:"timestamp"`
+    Level     string                 `json:"level"`
+    Service   string                 `json:"service"`
+    Message   string                 `json:"message"`
+    RequestID string                 `json:"request_id,omitempty"`
+    UserID    string                 `json:"user_id,omitempty"`
+    Metadata  map[string]interface{} `json:"metadata,omitempty"`
+}
+```
+
+## Performance Requirements
+- **Use connection pooling** for database connections
+- **Implement caching** with Redis for frequently accessed data
+- **Use goroutines** for concurrent operations where appropriate
+- **Profile memory and CPU usage** regularly
+
+## Dependency Management
+- **Use Go modules** for dependency management
+- **Pin dependency versions** in go.mod
+- **Regularly update dependencies** for security patches
+- **Use tools like `go mod tidy`** to keep dependencies clean
+
+## Testing Standards
+- **Unit tests**: Test individual functions and methods
+- **Integration tests**: Test API endpoints and database interactions
+- **Use testify** for assertions and mocking
+- **Aim for 80%+ code coverage**
+
+```go
+// Test example
+func TestUserService_CreateUser(t *testing.T) {
+    // Setup
+    db := setupTestDB(t)
+    service := NewUserService(db)
+    
+    // Test
+    user, err := service.CreateUser("0x123...")
+    
+    // Assert
+    assert.NoError(t, err)
+    assert.NotNil(t, user)
+    assert.Equal(t, "0x123...", user.Address)
+}
+```
+
+## Middleware Standards
+- **Request ID**: Generate unique request IDs for tracing
+- **CORS**: Configure appropriate CORS policies
+- **Authentication**: JWT-based authentication middleware
+- **Rate Limiting**: Implement rate limiting per endpoint
+- **Logging**: Log all requests and responses

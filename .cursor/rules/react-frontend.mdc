@@ -1,0 +1,201 @@
+# React Frontend Development Rules
+
+## Project Structure
+```
+frontend/
+├── public/                 # Static assets
+├── src/
+│   ├── components/        # Reusable UI components
+│   │   ├── common/       # Common components
+│   │   └── ui/           # UI library components
+│   ├── pages/            # Page components
+│   ├── hooks/            # Custom React hooks
+│   ├── services/         # API services
+│   ├── store/            # Redux store
+│   ├── utils/            # Utility functions
+│   ├── types/            # TypeScript type definitions
+│   └── assets/           # Images, fonts, etc.
+└── tests/                # Test files
+```
+
+## Naming Conventions
+- **Components**: PascalCase (e.g., `UserDashboard.tsx`, `TransactionTable.tsx`)
+- **Files**: PascalCase for components, camelCase for utilities
+- **Hooks**: camelCase starting with 'use' (e.g., `useAuth.ts`, `useTransaction.ts`)
+- **Styles**: Component.module.css (CSS Modules)
+
+## Component Design Standards
+```typescript
+// Component interface definition
+interface ComponentProps {
+  title: string;
+  value?: number;
+  onChange?: (value: number) => void;
+  className?: string;
+}
+
+// Component implementation
+const ComponentName: React.FC<ComponentProps> = ({
+  title,
+  value,
+  onChange,
+  className
+}) => {
+  // Component logic here
+  return (
+    <div className={className}>
+      {/* JSX here */}
+    </div>
+  );
+};
+
+// Default export
+export default ComponentName;
+export type { ComponentProps };
+```
+
+## State Management (Redux Toolkit)
+```typescript
+// Slice definition
+const userSlice = createSlice({
+  name: 'user',
+  initialState: {
+    profile: null as UserProfile | null,
+    loading: false,
+    error: null as string | null,
+  },
+  reducers: {
+    setUser: (state, action: PayloadAction<UserProfile>) => {
+      state.profile = action.payload;
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    },
+  },
+});
+```
+
+## API Integration Standards
+```typescript
+// API service structure
+class TokenAPI {
+  private baseURL = '/api/v1/tokens';
+
+  async getMintHistory(params: PaginationParams): Promise<MintTransaction[]> {
+    const response = await axios.get(`${this.baseURL}/mint-history`, { params });
+    return response.data.data;
+  }
+
+  async mintTokens(request: MintRequest): Promise<void> {
+    await axios.post(`${this.baseURL}/mint`, request);
+  }
+}
+
+// React Query integration
+const useMintHistory = (params: PaginationParams) => {
+  return useQuery({
+    queryKey: ['mintHistory', params],
+    queryFn: () => tokenAPI.getMintHistory(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+```
+
+## Form Validation
+```typescript
+// Using react-hook-form with yup validation
+const schema = yup.object({
+  address: yup
+    .string()
+    .required('地址不能为空')
+    .matches(/^0x[a-fA-F0-9]{40}$/, '无效的以太坊地址'),
+  amount: yup
+    .number()
+    .required('金额不能为空')
+    .positive('金额必须为正数')
+    .max(1000000, '金额不能超过1,000,000'),
+});
+
+const MintForm: React.FC = () => {
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(schema),
+  });
+
+  const onSubmit = (data: MintFormData) => {
+    // Handle form submission
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Form fields */}
+    </form>
+  );
+};
+```
+
+## Security Requirements
+- **Input sanitization**: Always sanitize user inputs
+- **XSS prevention**: Use proper escaping for dynamic content
+- **CSRF protection**: Include CSRF tokens in forms
+- **Content Security Policy**: Implement proper CSP headers
+
+## Performance Requirements
+- **Code splitting**: Use React.lazy for route-based code splitting
+- **Memoization**: Use React.memo, useMemo, useCallback appropriately
+- **Bundle optimization**: Keep bundle size under 1MB gzipped
+- **Image optimization**: Use WebP format and lazy loading
+
+```typescript
+// Code splitting example
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Transactions = React.lazy(() => import('./pages/Transactions'));
+
+// Performance optimization
+const ExpensiveComponent = React.memo(({ data }: Props) => {
+  const memoizedValue = useMemo(() => {
+    return expensiveCalculation(data);
+  }, [data]);
+
+  return <div>{memoizedValue}</div>;
+});
+```
+
+## Testing Standards
+- **Unit tests**: Test individual components and hooks
+- **Integration tests**: Test component interactions
+- **E2E tests**: Test critical user flows
+- **Use React Testing Library** for component testing
+
+```typescript
+// Component test example
+describe('MintForm', () => {
+  it('should submit form with valid data', async () => {
+    render(<MintForm />);
+    
+    await user.type(screen.getByLabelText('Address'), '0x123...');
+    await user.type(screen.getByLabelText('Amount'), '1000');
+    await user.click(screen.getByRole('button', { name: 'Mint' }));
+    
+    expect(mockMintFunction).toHaveBeenCalledWith({
+      address: '0x123...',
+      amount: 1000,
+    });
+  });
+});
+```
+
+## Accessibility (a11y) Requirements
+- **Semantic HTML**: Use proper HTML elements
+- **ARIA labels**: Add ARIA labels for complex components
+- **Keyboard navigation**: Ensure full keyboard accessibility
+- **Color contrast**: Maintain WCAG 2.1 AA compliance
+
+## UI/UX Standards
+- **Consistent spacing**: Use design system spacing tokens
+- **Loading states**: Show loading indicators for async operations
+- **Error states**: Display user-friendly error messages
+- **Empty states**: Provide helpful empty state messages
+- **Responsive design**: Support mobile and desktop viewports

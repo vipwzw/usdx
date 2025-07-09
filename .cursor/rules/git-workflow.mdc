@@ -1,0 +1,144 @@
+# Git Workflow Rules
+
+## Branch Naming Convention
+```bash
+# Feature branches
+feature/USDT-001-add-minting-function
+feature/USDT-002-implement-blacklist-ui
+
+# Bug fix branches
+bugfix/USDT-003-fix-balance-calculation
+bugfix/USDT-004-resolve-auth-issue
+
+# Hot fix branches (for production issues)
+hotfix/USDT-005-security-patch
+hotfix/USDT-006-critical-bug-fix
+
+# Release branches
+release/v1.0.0
+release/v1.1.0
+```
+
+## Commit Message Standards
+Follow Conventional Commits specification:
+
+```bash
+# Format: <type>[optional scope]: <description>
+
+# Feature commits
+feat: add token minting functionality
+feat(backend): implement blacklist API endpoints
+feat(frontend): add transaction monitoring dashboard
+
+# Bug fixes
+fix: resolve balance calculation error
+fix(contract): fix reentrancy vulnerability
+fix(ui): correct responsive layout issues
+
+# Documentation
+docs: update API documentation
+docs(contract): add function documentation
+
+# Code style/formatting
+style: format code according to standards
+style(frontend): apply consistent spacing
+
+# Refactoring
+refactor: restructure permission management
+refactor(backend): optimize database queries
+
+# Tests
+test: add unit tests for minting functions
+test(contract): add security test cases
+
+# Chores
+chore: update dependencies
+chore(ci): improve build pipeline
+```
+
+## Pull Request Guidelines
+
+### PR Title Format
+```
+[USDT-###] Brief description of changes
+
+Examples:
+[USDT-001] Add token minting functionality
+[USDT-002] Implement user blacklist management
+[USDT-003] Fix balance calculation error
+```
+
+### PR Description Template
+```markdown
+## Description
+Brief description of what this PR does.
+
+## Changes Made
+- [ ] Added new feature X
+- [ ] Fixed bug Y
+- [ ] Updated documentation Z
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Security Considerations
+- [ ] No new security vulnerabilities introduced
+- [ ] Security review completed (if applicable)
+- [ ] Audit requirements considered
+
+## Breaking Changes
+- [ ] No breaking changes
+- [ ] Breaking changes documented
+
+## Checklist
+- [ ] Code follows project standards
+- [ ] Tests added for new functionality
+- [ ] Documentation updated
+- [ ] All CI checks pass
+```
+
+## Code Review Requirements
+- **Minimum 2 approvals** required for all PRs
+- **Security review required** for smart contract changes
+- **Performance review required** for backend changes
+- **UI/UX review required** for frontend changes
+
+## Version Control Standards
+
+### Semantic Versioning (SemVer)
+```
+MAJOR.MINOR.PATCH
+
+Examples:
+1.0.0 - Initial release
+1.1.0 - New features added
+1.1.1 - Bug fixes
+2.0.0 - Breaking changes
+```
+
+### Release Process
+1. Create release branch from `develop`
+2. Update version numbers and CHANGELOG
+3. Create PR to `main` branch
+4. After merge, create git tag
+5. Deploy to production
+6. Merge `main` back to `develop`
+
+## Protected Branches
+- **main**: Production-ready code only
+- **develop**: Integration branch for features
+- **release/***: Release preparation branches
+
+## Required Status Checks
+- All automated tests pass
+- Code coverage > 80%
+- Security scans pass
+- Linting checks pass
+- Build succeeds
+
+## Merge Strategies
+- **Squash and merge** for feature branches
+- **Merge commit** for release branches
+- **Rebase and merge** for hotfixes

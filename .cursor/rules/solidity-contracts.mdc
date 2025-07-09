@@ -1,0 +1,50 @@
+# Solidity Smart Contract Rules
+
+## Naming Conventions
+- **Contracts**: PascalCase (e.g., `USDTToken`, `BlacklistManager`)
+- **Functions**: camelCase (e.g., `mintTokens`, `addToBlacklist`)
+- **Variables**: camelCase (e.g., `totalSupply`, `isBlacklisted`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_MINT_AMOUNT`, `BLACKLIST_ROLE`)
+- **Events**: PascalCase (e.g., `TokensMinted`, `AddressBlacklisted`)
+
+## Security Requirements
+- **ALWAYS use reentrancy guards** for external calls
+- **ALWAYS validate inputs** before processing
+- **ALWAYS use access control modifiers** for sensitive functions
+- **ALWAYS emit events** for state changes
+- **NEVER use unchecked arithmetic** unless absolutely necessary
+
+## Required Patterns
+```solidity
+// Access control pattern
+modifier onlyMinter() {
+    require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
+    _;
+}
+
+// Reentrancy protection
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+// Safe arithmetic (Solidity 0.8+ has built-in overflow checks)
+using SafeMath for uint256; // Only if using Solidity < 0.8.0
+```
+
+## Architecture Patterns
+- **Use OpenZeppelin Upgradeable contracts** for proxy pattern
+- **Implement role-based access control** using OpenZeppelin AccessControl
+- **Use pause functionality** for emergency stops
+- **Implement proper event logging** for audit trails
+
+## Testing Requirements
+- **95%+ code coverage** required
+- **Test all edge cases** and error conditions
+- **Include fuzzing tests** for critical functions
+- **Gas optimization tests** for expensive operations
+
+## Key Security Checks
+1. Integer overflow/underflow protection
+2. Reentrancy attack prevention
+3. Access control validation
+4. Input sanitization
+5. State consistency checks
+6. Emergency pause mechanism
