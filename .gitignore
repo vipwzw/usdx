@@ -1,0 +1,339 @@
+# ================================
+# USDX Stablecoin Project .gitignore
+# ================================
+
+# =====================================
+# Node.js Dependencies & Package Files
+# =====================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Optional npm cache directory
+.npm
+.yarn-integrity
+
+# ESLint and Prettier cache
+.eslintcache
+.stylelintcache
+
+# =====================================
+# Environment Variables & Configuration
+# =====================================
+.env
+.env.*
+!.env.example
+!env.example
+
+# Local configuration files
+config.local.*
+*.local.json
+local-*.json
+
+# =====================================
+# Build & Distribution Files
+# =====================================
+build/
+dist/
+out/
+.next/
+.nuxt/
+
+# =====================================
+# Smart Contract Development
+# =====================================
+
+# Hardhat
+cache/
+artifacts/
+typechain/
+typechain-types/
+
+# Foundry
+forge-cache/
+broadcast/
+
+# Contract compilation artifacts
+contracts/cache/
+contracts/artifacts/
+contracts/typechain/
+contracts/typechain-types/
+contracts/build/
+
+# Deployment files
+deployment-*.json
+deployments/
+.openzeppelin/
+deploy-config.json
+
+# Contract verification
+verification/
+.env.verification
+
+# Gas optimization
+gasReporterOutput.json
+gas-report.txt
+
+# =====================================
+# Security & Private Data
+# =====================================
+
+# Private keys and wallets
+*.key
+*.keystore
+wallet.json
+mnemonic.txt
+private-keys.txt
+accounts.json
+
+# Seed phrases and secrets
+seed.txt
+secret.txt
+*.pem
+*.p12
+
+# =====================================
+# Testing & Coverage
+# =====================================
+
+# Coverage reports
+coverage/
+coverage.json
+.nyc_output/
+lcov.info
+*.lcov
+
+# Test artifacts
+test-results/
+test-output/
+.pytest_cache/
+
+# Local test files
+test-*.js
+test-*.ts
+*.test.local.*
+
+# =====================================
+# Development Tools & IDEs
+# =====================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# =====================================
+# Operating System Files
+# =====================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# =====================================
+# Logs & Runtime Data
+# =====================================
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =====================================
+# Temporary & Cache Files
+# =====================================
+
+# Temporary folders
+tmp/
+temp/
+.tmp/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# =====================================
+# Documentation & Reports
+# =====================================
+
+# Generated documentation
+docs/build/
+api-docs/
+.docusaurus/
+
+# Security audit reports
+audit-*.json
+security-report.*
+
+# Slither analysis
+slither.db.json
+slither-report.*
+
+# Mythril analysis
+mythril.json
+mythril-report.*
+
+# =====================================
+# CI/CD & Deployment
+# =====================================
+
+# Docker
+.dockerignore.local
+docker-compose.override.yml
+
+# Kubernetes
+*.kubeconfig
+k8s-secrets/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+
+# =====================================
+# Package Archives
+# =====================================
+
+# Compressed files
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# =====================================
+# Backup Files
+# =====================================
+*.bak
+*.backup
+*.old
+*.orig
+
+# =====================================
+# Database
+# =====================================
+*.db
+*.sqlite
+*.sqlite3
+
+# =====================================
+# Miscellaneous
+# =====================================
+
+# Optional REPL history
+.node_repl_history
+
+# Directory for instrumented libs
+lib-cov/
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript
+*.tsbuildinfo
+
+# Contract flattened files
+flattened/
+*.flat.sol
+
+# Local development files
+.local/
+*.local
+local.*
+
+# Lock files (keep package-lock.json but ignore others)
+!package-lock.json
+!yarn.lock
+*.lock
+
+# Editor swap files
+*.swp
+*.swo
+
+# Python (if any Python tools are used)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+
+# =====================================
+# Project Specific
+# =====================================
+
+# Local configuration overrides
+hardhat.config.local.js
+truffle-config.local.js
+
+# Local deployment scripts
+deploy-local.*
+scripts/local-*
+
+# Test data
+test-data/
+mock-data/
+
+# Benchmark results
+benchmarks/results/
+performance-*.json
