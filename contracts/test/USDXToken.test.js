@@ -119,6 +119,7 @@ describe('USDXToken', function () {
 
         it('Should detect invalid KYC sender', async function () {
             await usdxToken.setKYCVerified(addr1.address, true);
+            await usdxToken.setKYCVerified(owner.address, false); // Remove owner's KYC verification
             
             const restrictionCode = await usdxToken.detectTransferRestriction(
                 owner.address,

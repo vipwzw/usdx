@@ -117,6 +117,9 @@ contract USDXToken is
         _whitelistEnabled = true;
         _regionRestrictionsEnabled = false;
 
+        // Set admin as KYC verified before minting
+        _kycVerified[admin] = true;
+
         // Mint initial supply to admin
         if (initialSupply > 0) {
             _mint(admin, initialSupply);
@@ -224,10 +227,10 @@ contract USDXToken is
         address to,
         uint256 amount
     ) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
-        // Call parent _beforeTokenTransfer function first
+        // Call parent _beforeTokenTransfer function first (includes pause check)
         super._beforeTokenTransfer(from, to, amount);
         
-        // Check transfer restrictions (skip for minting/burning)
+        // Check ERC-1404 transfer restrictions only for regular transfers (not mint/burn)
         if (from != address(0) && to != address(0)) {
             uint8 restrictionCode = detectTransferRestriction(from, to, amount);
             require(restrictionCode == SUCCESS, 
@@ -235,6 +238,21 @@ contract USDXToken is
             
             // Update daily transfer tracking
             _updateDailyTransferAmount(from, amount);
+        }
+        
+        // For minting operations, check ERC-1404 restrictions (excluding pause check)
+        if (from == address(0) && to != address(0)) {
+            // Skip pause check (already done by super._beforeTokenTransfer)
+            // Check other restrictions
+            if (_blacklisted[to]) {
+                revert("Receiver address is blacklisted");
+            }
+            if (_kycRequired && !_kycVerified[to]) {
+                revert("Receiver KYC verification required");
+            }
+            if (_sanctioned[to]) {
+                revert("Address is sanctioned");
+            }
         }
 
         // Update holder count tracking
@@ -253,10 +271,7 @@ contract USDXToken is
     {
         require(to != address(0), "Cannot mint to zero address");
         
-        uint8 restrictionCode = detectTransferRestriction(address(0), to, amount);
-        require(restrictionCode == SUCCESS, 
-                messageForTransferRestriction(restrictionCode));
-        
+        // Check pause status first (will be caught by _beforeTokenTransfer)
         _mint(to, amount);
     }
 

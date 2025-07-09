@@ -41,6 +41,15 @@ describe('USDXGovernance', function () {
             ],
             { initializer: 'initialize', kind: 'uups' }
         );
+
+        // Grant necessary roles to governance contract
+        const PAUSER_ROLE = await usdxToken.PAUSER_ROLE();
+        const MINTER_ROLE = await usdxToken.MINTER_ROLE();
+        const UPGRADER_ROLE = await usdxToken.UPGRADER_ROLE();
+        
+        await usdxToken.grantRole(PAUSER_ROLE, await governance.getAddress());
+        await usdxToken.grantRole(MINTER_ROLE, await governance.getAddress());
+        await usdxToken.grantRole(UPGRADER_ROLE, await governance.getAddress());
     });
 
     describe('Deployment', function () {
