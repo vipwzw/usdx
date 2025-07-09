@@ -3,7 +3,7 @@ name: Local Test
 on: [push, pull_request]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
 
 jobs:
   local-test:
