@@ -1,0 +1,210 @@
+name: Deploy Contracts
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to deploy to'
+        required: true
+        default: 'sepolia'
+        type: choice
+        options:
+        - sepolia
+        - goerli
+        - polygon-mumbai
+        - bsc-testnet
+        - ethereum
+        - polygon
+        - bsc
+      verify:
+        description: 'Verify contracts on Etherscan'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.network }}
+    runs-on: ubuntu-latest
+    environment: ${{ contains(github.event.inputs.network, 'ethereum') && 'production' || 'staging' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Create environment file
+      run: |
+        cd contracts
+        cat > .env << EOF
+        # Network Configuration
+        PRIVATE_KEY=${{ secrets.PRIVATE_KEY }}
+        DEPLOYER_PRIVATE_KEY=${{ secrets.DEPLOYER_PRIVATE_KEY }}
+        
+        # API Keys
+        INFURA_API_KEY=${{ secrets.INFURA_API_KEY }}
+        ALCHEMY_API_KEY=${{ secrets.ALCHEMY_API_KEY }}
+        ETHERSCAN_API_KEY=${{ secrets.ETHERSCAN_API_KEY }}
+        POLYGONSCAN_API_KEY=${{ secrets.POLYGONSCAN_API_KEY }}
+        BSCSCAN_API_KEY=${{ secrets.BSCSCAN_API_KEY }}
+        
+        # Contract Configuration
+        TOKEN_NAME=USDX Stablecoin
+        TOKEN_SYMBOL=USDX
+        INITIAL_SUPPLY=1000000000000000
+        INITIAL_OWNER=${{ secrets.INITIAL_OWNER || github.actor }}
+        
+        # Governance Configuration
+        GOVERNORS=${{ secrets.GOVERNORS }}
+        REQUIRED_VOTES=${{ secrets.REQUIRED_VOTES || '2' }}
+        VOTING_PERIOD=${{ secrets.VOTING_PERIOD || '86400' }}
+        EXECUTION_DELAY=${{ secrets.EXECUTION_DELAY || '3600' }}
+        EOF
+        
+    - name: Compile contracts
+      run: |
+        cd contracts
+        npx hardhat compile
+        
+    - name: Run pre-deployment tests
+      run: |
+        cd contracts
+        npx hardhat test test/USDXToken.test.js
+        npx hardhat test test/USDXGovernance.test.js
+        
+    - name: Deploy contracts
+      run: |
+        cd contracts
+        npx hardhat run scripts/deploy.js --network ${{ github.event.inputs.network }}
+        
+    - name: Verify contracts
+      if: github.event.inputs.verify == 'true'
+      run: |
+        cd contracts
+        npx hardhat run scripts/verify.js --network ${{ github.event.inputs.network }}
+        
+    - name: Run security checks on deployed contracts
+      run: |
+        cd contracts
+        npx hardhat run scripts/security-check.js --network ${{ github.event.inputs.network }}
+        
+    - name: Generate deployment report
+      run: |
+        cd contracts
+        echo "# Deployment Report" > deployment-report.md
+        echo "" >> deployment-report.md
+        echo "## Network: ${{ github.event.inputs.network }}" >> deployment-report.md
+        echo "## Deployment Time: $(date)" >> deployment-report.md
+        echo "## Deployer: ${{ github.actor }}" >> deployment-report.md
+        echo "" >> deployment-report.md
+        
+        if [ -f "deployments.json" ]; then
+          echo "## Deployed Contracts" >> deployment-report.md
+          echo "\`\`\`json" >> deployment-report.md
+          cat deployments.json >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+        fi
+        
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-${{ github.event.inputs.network }}-${{ github.run_number }}
+        path: |
+          contracts/deployments.json
+          contracts/deployment-report.md
+          contracts/artifacts/
+        retention-days: 90
+        
+    - name: Create deployment issue
+      if: success()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          let body = `## 🚀 Deployment Successful\n\n`;
+          body += `**Network:** ${{ github.event.inputs.network }}\n`;
+          body += `**Deployed by:** @${{ github.actor }}\n`;
+          body += `**Timestamp:** ${new Date().toISOString()}\n\n`;
+          
+          try {
+            const deploymentData = fs.readFileSync('contracts/deployments.json', 'utf8');
+            const contracts = JSON.parse(deploymentData);
+            
+            body += `### Deployed Contracts\n\n`;
+            for (const [name, data] of Object.entries(contracts)) {
+              body += `- **${name}:** \`${data.address}\`\n`;
+              if (data.implementation) {
+                body += `  - Implementation: \`${data.implementation}\`\n`;
+              }
+            }
+          } catch (error) {
+            body += `*Deployment details not available*\n`;
+          }
+          
+          body += `\n### Next Steps\n`;
+          body += `- [ ] Verify contract functionality\n`;
+          body += `- [ ] Set up monitoring\n`;
+          body += `- [ ] Update documentation\n`;
+          body += `- [ ] Notify stakeholders\n`;
+          
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `Deployment to ${{ github.event.inputs.network }} - ${new Date().toISOString().split('T')[0]}`,
+            body: body,
+            labels: ['deployment', '${{ github.event.inputs.network }}']
+          });
+
+  post-deployment:
+    name: Post-Deployment Checks
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Download deployment artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: deployment-${{ github.event.inputs.network }}-${{ github.run_number }}
+        path: contracts/
+        
+    - name: Run integration tests
+      run: |
+        cd contracts
+        # Run integration tests against deployed contracts
+        npx hardhat test test/Integration.test.js --network ${{ github.event.inputs.network }} || true
+        
+    - name: Start monitoring
+      run: |
+        cd contracts
+        # Start monitoring for deployed contracts
+        npx hardhat run scripts/monitor.js --network ${{ github.event.inputs.network }} || true 

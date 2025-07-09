@@ -1,0 +1,192 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    name: Test Smart Contracts
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Compile contracts
+      run: |
+        cd contracts
+        npx hardhat compile
+        
+    - name: Run tests
+      run: |
+        cd contracts
+        npx hardhat test
+        
+    - name: Generate coverage report
+      run: |
+        cd contracts
+        npx hardhat coverage
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./contracts/coverage/lcov.info
+        directory: ./contracts/coverage
+        fail_ci_if_error: true
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Run Solidity linter
+      run: |
+        cd contracts
+        npx solhint 'src/**/*.sol'
+        
+    - name: Run JavaScript linter
+      run: |
+        cd contracts
+        npx eslint 'test/**/*.js' 'scripts/**/*.js' --format=compact
+
+  security:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Run Slither security analysis
+      uses: crytic/slither-action@v0.3.0
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        working-directory: contracts
+        target: 'src/'
+        slither-args: '--exclude-dependencies'
+        fail-on: none
+        
+    - name: Run custom security checks
+      run: |
+        cd contracts
+        npm run security-check || true
+
+  gas-report:
+    name: Gas Usage Report
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Generate gas report
+      run: |
+        cd contracts
+        REPORT_GAS=true npx hardhat test > gas-report.txt
+        
+    - name: Comment gas report on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const gasReport = fs.readFileSync('contracts/gas-report.txt', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## ⛽ Gas Usage Report\n\n\`\`\`\n${gasReport}\n\`\`\``
+          });
+
+  build-artifacts:
+    name: Build and Archive Artifacts
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd contracts
+        npm ci
+        
+    - name: Compile contracts
+      run: |
+        cd contracts
+        npx hardhat compile
+        
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: contract-artifacts
+        path: |
+          contracts/artifacts/
+          contracts/typechain-types/
+        retention-days: 30 
