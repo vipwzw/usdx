@@ -1,0 +1,65 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.sol text
+*.js text
+*.ts text
+*.jsx text
+*.tsx text
+*.json text
+*.yaml text
+*.yml text
+*.md text
+*.txt text
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+
+# Videos
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wmv binary
+
+# Audio
+*.mp3 binary
+*.wav binary
+*.ogg binary
+
+# Documents
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# Exclude files from exporting
+.gitattributes export-ignore
+.gitignore export-ignore
+README.md export-ignore
+docs/ export-ignore
