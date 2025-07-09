@@ -107,14 +107,20 @@ jobs:
         cd contracts
         npm install
 
+    - name: Compile contracts
+      run: |
+        cd contracts
+        npx hardhat compile
+
     - name: Run Slither security analysis
-      uses: crytic/slither-action@v0.3.0
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        working-directory: contracts
-        target: 'src/'
-        slither-args: '--exclude-dependencies'
-        fail-on: none
+      run: |
+        cd contracts
+        # Install slither
+        pip3 install slither-analyzer
+        # Run slither analysis
+        slither src/ --exclude-dependencies --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" || true
+      env:
+        SOLC_VERSION: ${{ env.SOLIDITY_VERSION }}
 
     - name: Run custom security checks
       run: |
