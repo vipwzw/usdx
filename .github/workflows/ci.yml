@@ -2,17 +2,17 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
-    tags: [ 'v*' ]
+    branches: [main, develop]
+    tags: ["v*"]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   schedule:
     # 每日安全扫描
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
 
 env:
-  NODE_VERSION: '24'
-  SOLIDITY_VERSION: '0.8.22'
+  NODE_VERSION: "24"
+  SOLIDITY_VERSION: "0.8.22"
   FOUNDRY_PROFILE: ci
 
 jobs:
@@ -21,150 +21,158 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Compile contracts
-      run: |
-        cd contracts
-        npx hardhat compile
+      - name: Compile contracts
+        run: |
+          cd contracts
+          npx hardhat compile
 
-    - name: Run tests
-      run: |
-        cd contracts
-        npx hardhat test
+      - name: Run tests
+        run: |
+          cd contracts
+          npx hardhat test
 
-    - name: Generate coverage report
-      run: |
-        cd contracts
-        npx hardhat coverage
+      - name: Generate coverage report
+        run: |
+          cd contracts
+          npx hardhat coverage
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./contracts/coverage/lcov.info
-        directory: ./contracts/coverage
-        fail_ci_if_error: true
-        verbose: true
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./contracts/coverage/lcov.info
+          directory: ./contracts/coverage
+          fail_ci_if_error: true
+          verbose: true
 
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Run Solidity linter
-      run: |
-        cd contracts
-        npx solhint 'src/**/*.sol'
+      - name: Run Solidity linter
+        run: |
+          cd contracts
+          npx solhint 'src/**/*.sol'
 
-    - name: Run JavaScript linter
-      run: |
-        cd contracts
-        npx eslint 'test/**/*.js' 'scripts/**/*.js' --format=compact
+      - name: Run JavaScript linter
+        run: |
+          cd contracts
+          npx eslint 'test/**/*.js' 'scripts/**/*.js' --format=compact
 
   security:
     name: Security Analysis
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Compile contracts
-      run: |
-        cd contracts
-        npx hardhat compile
+      - name: Compile contracts
+        run: |
+          cd contracts
+          npx hardhat compile
 
-    - name: Run Slither security analysis
-      run: |
-        cd contracts
-        # Install slither
-        pip3 install slither-analyzer
-        # Run slither analysis
-        slither src/ --exclude-dependencies --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" || true
-      env:
-        SOLC_VERSION: ${{ env.SOLIDITY_VERSION }}
+      - name: Run Slither security analysis
+        run: |
+          cd contracts
+          # Install Python dependencies
+          pip3 install slither-analyzer solc-select
 
-    - name: Run custom security checks
-      run: |
-        cd contracts
-        npm run security-check || true
+          # Install and set correct Solidity version
+          solc-select install ${{ env.SOLIDITY_VERSION }}
+          solc-select use ${{ env.SOLIDITY_VERSION }}
+
+          # Verify Solidity version
+          solc --version
+
+          # Run slither analysis
+          slither src/ --exclude-dependencies --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" || true
+        env:
+          SOLC_VERSION: ${{ env.SOLIDITY_VERSION }}
+
+      - name: Run custom security checks
+        run: |
+          cd contracts
+          npm run security-check || true
 
   gas-report:
     name: Gas Usage Report
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Generate gas report
-      run: |
-        cd contracts
-        REPORT_GAS=true npx hardhat test > gas-report.txt
+      - name: Generate gas report
+        run: |
+          cd contracts
+          REPORT_GAS=true npx hardhat test > gas-report.txt
 
-    - name: Comment gas report on PR
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          const gasReport = fs.readFileSync('contracts/gas-report.txt', 'utf8');
+      - name: Comment gas report on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const gasReport = fs.readFileSync('contracts/gas-report.txt', 'utf8');
 
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `## ⛽ Gas Usage Report\n\n\`\`\`\n${gasReport}\n\`\`\``
-          });
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⛽ Gas Usage Report\n\n\`\`\`\n${gasReport}\n\`\`\``
+            });
 
   build-artifacts:
     name: Build and Archive Artifacts
@@ -172,39 +180,39 @@ jobs:
     needs: [test, lint]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Compile contracts
-      run: |
-        cd contracts
-        npx hardhat compile
+      - name: Compile contracts
+        run: |
+          cd contracts
+          npx hardhat compile
 
-    - name: Generate contract documentation
-      run: |
-        cd contracts
-        npx hardhat docgen || true
+      - name: Generate contract documentation
+        run: |
+          cd contracts
+          npx hardhat docgen || true
 
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: contract-artifacts
-        path: |
-          contracts/artifacts/
-          contracts/typechain-types/
-          contracts/docs/
-        retention-days: 30
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-artifacts
+          path: |
+            contracts/artifacts/
+            contracts/typechain-types/
+            contracts/docs/
+          retention-days: 30
 
   deployment-prep:
     name: Deployment Preparation
@@ -213,38 +221,38 @@ jobs:
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Compile contracts for deployment
-      run: |
-        cd contracts
-        npx hardhat compile
+      - name: Compile contracts for deployment
+        run: |
+          cd contracts
+          npx hardhat compile
 
-    - name: Validate deployment configuration
-      run: |
-        cd contracts
-        npx hardhat run scripts/validate-deployment.js || true
+      - name: Validate deployment configuration
+        run: |
+          cd contracts
+          npx hardhat run scripts/validate-deployment.js || true
 
-    - name: Archive deployment artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: deployment-artifacts-${{ github.sha }}
-        path: |
-          contracts/artifacts/
-          contracts/deployments/
-        retention-days: 30
+      - name: Archive deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-artifacts-${{ github.sha }}
+          path: |
+            contracts/artifacts/
+            contracts/deployments/
+          retention-days: 30
 
   performance-benchmark:
     name: Performance Benchmark
@@ -252,31 +260,31 @@ jobs:
     if: github.event_name == 'pull_request' || github.event.schedule
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Run performance benchmarks
-      run: |
-        cd contracts
-        npm run benchmark || true
+      - name: Run performance benchmarks
+        run: |
+          cd contracts
+          npm run benchmark || true
 
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-results-${{ github.run_number }}
-        path: contracts/benchmark-results.json
-        retention-days: 30
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_number }}
+          path: contracts/benchmark-results.json
+          retention-days: 30
 
   code-quality-metrics:
     name: Code Quality Metrics
@@ -284,36 +292,36 @@ jobs:
     if: github.event_name == 'pull_request' || github.event.schedule
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        # 移除缓存配置避免路径问题
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # 移除缓存配置避免路径问题
 
-    - name: Install dependencies
-      run: |
-        cd contracts
-        npm install
+      - name: Install dependencies
+        run: |
+          cd contracts
+          npm install
 
-    - name: Run code complexity analysis
-      run: |
-        cd contracts
-        npx hardhat run scripts/complexity-analysis.js || true
+      - name: Run code complexity analysis
+        run: |
+          cd contracts
+          npx hardhat run scripts/complexity-analysis.js || true
 
-    - name: Generate code metrics report
-      run: |
-        cd contracts
-        npm run metrics || true
+      - name: Generate code metrics report
+        run: |
+          cd contracts
+          npm run metrics || true
 
-    - name: Upload metrics report
-      uses: actions/upload-artifact@v4
-      with:
-        name: code-metrics-${{ github.run_number }}
-        path: contracts/code-metrics.json
-        retention-days: 30
+      - name: Upload metrics report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-metrics-${{ github.run_number }}
+          path: contracts/code-metrics.json
+          retention-days: 30
 
   summary-report:
     name: Summary Report
@@ -322,38 +330,38 @@ jobs:
     if: always()
 
     steps:
-    - name: Generate summary report
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const results = {
-            test: '${{ needs.test.result }}',
-            lint: '${{ needs.lint.result }}',
-            security: '${{ needs.security.result }}',
-            gas_report: '${{ needs.gas-report.result }}',
-            build_artifacts: '${{ needs.build-artifacts.result }}',
-            deployment_prep: '${{ needs.deployment-prep.result }}'
-          };
+      - name: Generate summary report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = {
+              test: '${{ needs.test.result }}',
+              lint: '${{ needs.lint.result }}',
+              security: '${{ needs.security.result }}',
+              gas_report: '${{ needs.gas-report.result }}',
+              build_artifacts: '${{ needs.build-artifacts.result }}',
+              deployment_prep: '${{ needs.deployment-prep.result }}'
+            };
 
-          const passed = Object.values(results).filter(r => r === 'success').length;
-          const total = Object.keys(results).length;
-          const status = passed === total ? '✅ All Passed' : `⚠️ ${passed}/${total} Passed`;
+            const passed = Object.values(results).filter(r => r === 'success').length;
+            const total = Object.keys(results).length;
+            const status = passed === total ? '✅ All Passed' : `⚠️ ${passed}/${total} Passed`;
 
-          const summary = `## 🚀 CI/CD Pipeline Summary
+            const summary = `## 🚀 CI/CD Pipeline Summary
 
-          **Status**: ${status}
+            **Status**: ${status}
 
-          ### Job Results:
-          ${Object.entries(results).map(([job, result]) => {
-            const icon = result === 'success' ? '✅' : result === 'failure' ? '❌' : '⚪';
-            return `- ${icon} **${job.replace('_', ' ')}**: ${result}`;
-          }).join('\n')}
+            ### Job Results:
+            ${Object.entries(results).map(([job, result]) => {
+              const icon = result === 'success' ? '✅' : result === 'failure' ? '❌' : '⚪';
+              return `- ${icon} **${job.replace('_', ' ')}**: ${result}`;
+            }).join('\n')}
 
-          ### Next Steps:
-          ${passed === total ?
-            '🎉 All checks passed! Ready for deployment.' :
-            '🔧 Please review and fix failed checks before proceeding.'
-          }
-          `;
+            ### Next Steps:
+            ${passed === total ?
+              '🎉 All checks passed! Ready for deployment.' :
+              '🔧 Please review and fix failed checks before proceeding.'
+            }
+            `;
 
-          console.log(summary);
+            console.log(summary);
