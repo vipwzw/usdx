@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 
 /**
@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @dev Interface for tokens with transfer restrictions
  * @author USDT Stablecoin Team
  */
-interface IERC1404 is IERC20 {
+interface IERC1404 is IERC20Upgradeable {
     /**
      * @dev Detects if a transfer would be restricted and returns the restriction code
      * @param from Address tokens are transferred from

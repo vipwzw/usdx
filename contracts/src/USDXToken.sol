@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -214,31 +214,31 @@ contract USDXToken is
     }
 
     /**
-     * @dev Override _update to implement ERC-1404 restrictions and handle balance tracking
+     * @dev Override _beforeTokenTransfer to implement ERC-1404 restrictions and handle balance tracking
      * @param from Sender address
      * @param to Recipient address
-     * @param value Transfer amount
+     * @param amount Transfer amount
      */
-    function _update(
+    function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 value
+        uint256 amount
     ) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+        // Call parent _beforeTokenTransfer function first
+        super._beforeTokenTransfer(from, to, amount);
+        
         // Check transfer restrictions (skip for minting/burning)
         if (from != address(0) && to != address(0)) {
-            uint8 restrictionCode = detectTransferRestriction(from, to, value);
+            uint8 restrictionCode = detectTransferRestriction(from, to, amount);
             require(restrictionCode == SUCCESS, 
                     messageForTransferRestriction(restrictionCode));
             
             // Update daily transfer tracking
-            _updateDailyTransferAmount(from, value);
+            _updateDailyTransferAmount(from, amount);
         }
 
-        // Call parent _update function
-        super._update(from, to, value);
-
         // Update holder count tracking
-        _updateHolderCount(from, to, value);
+        _updateHolderCount(from, to, amount);
     }
 
     /**
