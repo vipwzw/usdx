@@ -108,7 +108,7 @@ jobs:
         npm install
 
     - name: Run Slither security analysis
-      uses: crytic/slither-action@v0.3.0
+      uses: crytic/slither-action@v0.4.1
       with:
         node-version: ${{ env.NODE_VERSION }}
         working-directory: contracts
