@@ -137,9 +137,6 @@ scTopics
 # Gas reporter
 gasReporterOutput.json
 
-# Solhint
-.solhint.json
-
 # Contract flattened files
 flattened/
 *.flat.sol
@@ -164,4 +161,4 @@ contracts/typechain/
 
 # Verification files
 verification/
-.env.verification 
+.env.verification
