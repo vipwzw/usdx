@@ -181,7 +181,7 @@ Error: EBADENGINE Unsupported engine
 
 **解决方案**：
 - 检查 `.github/workflows/` 中的 Node.js 版本设置
-- 确保使用 Node.js 20
+- 确保使用 Node.js 24（已从20升级以解决缓存问题）
 
 #### 4. 权限问题
 ```bash
