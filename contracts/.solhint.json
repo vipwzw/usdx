@@ -11,8 +11,6 @@
     "reason-string": ["warn", { "maxLength": 50 }],
     "constructor-syntax": "error",
     "quotes": ["error", "double"],
-    "bracket-align": "error",
-    "semicolon": ["error", "always"],
     "func-name-mixedcase": "error",
     "var-name-mixedcase": "error",
     "const-name-snakecase": "error",
@@ -23,9 +21,7 @@
     "ordering": "warn",
     "visibility-modifier-order": "error",
     "no-unused-vars": "error",
-    "const-name-snakecase": "off",
     "func-param-name-mixedcase": "error",
-    "modifier-name-mixedcase": "error",
     "named-parameters-mapping": "warn",
     "no-console": "warn",
     "code-complexity": ["warn", 7],
@@ -42,4 +38,4 @@
     "no-global-import": "error"
   },
   "plugins": ["prettier"]
-} 
+}

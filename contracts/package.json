@@ -130,7 +130,7 @@
     "istanbul-badges-readme": "^1.8.5",
     "prettier": "^3.0.3",
     "prettier-plugin-solidity": "^1.4.3",
-    "solhint": "^4.0.0",
+    "solhint": "^6.0.0",
     "solhint-plugin-prettier": "^0.1.0",
     "solidity-coverage": "^0.8.4",
     "typechain": "^8.3.1"
