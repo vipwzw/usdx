@@ -188,7 +188,7 @@ describe("Integration Tests", () => {
       // Step 5: Attempt blocked transfer
       await expect(
         usdxToken.connect(user1).transfer(user2.address, transferAmount),
-      ).to.be.revertedWith("Sender address is blacklisted");
+      ).to.be.revertedWithCustomError(usdxToken, "TransferRestricted");
 
       // Step 6: Remove from blacklist
       await usdxToken.connect(blacklister).setBlacklisted(user1.address, false);
@@ -283,7 +283,7 @@ describe("Integration Tests", () => {
       // Second transfer should succeed (total: 60K, exceeds 50K limit)
       await expect(
         usdxToken.connect(user1).transfer(user2.address, transferAmount),
-      ).to.be.revertedWith("Amount exceeds transfer limit");
+      ).to.be.revertedWithCustomError(usdxToken, "TransferRestricted");
 
       // Smaller transfer should succeed (total would be 40K)
       const smallTransferAmount = ethers.parseUnits("10000", 6);
@@ -322,7 +322,7 @@ describe("Integration Tests", () => {
       const transferAmount = ethers.parseUnits("10000", 6);
       await expect(
         usdxToken.connect(user1).transfer(user2.address, transferAmount),
-      ).to.be.revertedWith("Receiver KYC verification required");
+      ).to.be.revertedWithCustomError(usdxToken, "TransferRestricted");
     });
 
     it("Should handle sanctions", async () => {
@@ -333,7 +333,7 @@ describe("Integration Tests", () => {
       const transferAmount = ethers.parseUnits("10000", 6);
       await expect(
         usdxToken.connect(user1).transfer(user2.address, transferAmount),
-      ).to.be.revertedWith("Address is sanctioned");
+      ).to.be.revertedWithCustomError(usdxToken, "TransferRestricted");
     });
   });
 
@@ -353,7 +353,7 @@ describe("Integration Tests", () => {
     it("Should prevent zero address operations", async () => {
       await expect(
         usdxToken.connect(minter).mint(ethers.ZeroAddress, ethers.parseUnits("1000", 6)),
-      ).to.be.revertedWith("Cannot mint to zero address");
+      ).to.be.revertedWithCustomError(usdxToken, "CannotMintToZeroAddress");
     });
 
     it("Should handle burn operations correctly", async () => {

@@ -85,9 +85,9 @@ library RestrictionMessages {
      * @return A human-readable message
      */
     function messageForCode(uint8 restrictionCode) internal pure returns (string memory) {
-        if (restrictionCode == RestrictionCodes.SUCCESS) return "Success";
-        if (restrictionCode == RestrictionCodes.FAILURE) return "Failure";
-        if (restrictionCode == RestrictionCodes.BLACKLISTED_SENDER) return "Sender blacklisted";
+        if (restrictionCode == RestrictionCodes.SUCCESS) return "Transfer allowed";
+        if (restrictionCode == RestrictionCodes.FAILURE) return "Transfer failed";
+        if (restrictionCode == RestrictionCodes.BLACKLISTED_SENDER) return "Sender address is blacklisted";
         if (restrictionCode == RestrictionCodes.BLACKLISTED_RECEIVER) return "Receiver blacklisted";
         if (restrictionCode == RestrictionCodes.INSUFFICIENT_BALANCE) return "Insufficient balance";
         if (restrictionCode == RestrictionCodes.PAUSED) return "Contract paused";
