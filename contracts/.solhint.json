@@ -7,7 +7,6 @@
     "func-visibility": ["warn", { "ignoreConstructors": true }],
     "max-line-length": ["error", 140],
     "not-rely-on-time": "warn",
-    "prettier/prettier": "error",
     "reason-string": ["warn", { "maxLength": 50 }],
     "constructor-syntax": "error",
     "quotes": ["error", "double"],
@@ -36,6 +35,5 @@
     "no-inline-assembly": "warn",
     "no-unused-import": "error",
     "no-global-import": "error"
-  },
-  "plugins": ["prettier"]
+  }
 }

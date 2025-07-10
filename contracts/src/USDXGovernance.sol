@@ -28,7 +28,7 @@ contract USDXGovernance is
     error InvalidTargetAddress();
     error DescriptionCannotBeEmpty();
     error VotingHasEnded();
-    error ProposalCancelled();
+    error ProposalAlreadyCancelled();
     error AlreadyVoted();
     error VotingStillActive();
     error ProposalAlreadyExecuted();
@@ -265,7 +265,7 @@ contract USDXGovernance is
             revert VotingHasEnded();
         }
         if (proposal.cancelled) {
-            revert ProposalCancelled();
+            revert ProposalAlreadyCancelled();
         }
         if (proposal.hasVoted[msg.sender]) {
             revert AlreadyVoted();
@@ -299,7 +299,7 @@ contract USDXGovernance is
             revert ProposalAlreadyExecuted();
         }
         if (proposal.cancelled) {
-            revert ProposalCancelled();
+            revert ProposalAlreadyCancelled();
         }
         if (proposal.forVotes < requiredVotes) {
             revert InsufficientVotes();

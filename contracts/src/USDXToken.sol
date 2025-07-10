@@ -8,7 +8,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import { IERC1404 } from "./interfaces/IERC1404.sol";
+import { IERC1404, RestrictionMessages } from "./interfaces/IERC1404.sol";
 
 /**
  * @title USDX Stablecoin Token
