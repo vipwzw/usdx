@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit CI checks..."
+
+# Run lint-staged to check and fix staged files
+npx lint-staged
+
+# Run quick CI checks
+echo "🏗️  Running quick CI checks..."
+npm run ci:quick
+
+echo "✅ Pre-commit CI checks completed!"

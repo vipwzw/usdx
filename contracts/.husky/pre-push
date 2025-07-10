@@ -1,0 +1,10 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🚀 Running pre-push CI checks..."
+
+# Run comprehensive local CI checks
+echo "🏗️  Running complete CI pipeline..."
+npm run ci:local
+
+echo "✅ All pre-push CI checks completed! Ready to push 🚀"
