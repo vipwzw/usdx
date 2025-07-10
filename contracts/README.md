@@ -5,6 +5,7 @@
 ## 🚀 功能特性
 
 ### 核心功能
+
 - **ERC-1404标准**: 实现传输限制和合规性检查
 - **ERC-20兼容**: 完全兼容ERC-20标准
 - **铸币和销毁**: 受控制的代币发行和销毁机制
@@ -15,6 +16,7 @@
 - **可升级性**: 使用UUPS代理模式支持合约升级
 
 ### 治理功能
+
 - **多重签名**: 多签名治理合约
 - **提案系统**: 创建和投票提案
 - **时间锁**: 执行延迟机制
@@ -113,9 +115,11 @@ npm run verify:mainnet
 ### 核心合约
 
 #### 1. USDTToken.sol
+
 主要的稳定币合约，实现ERC-1404和ERC-20功能。
 
 **主要功能：**
+
 - 代币发行和管理
 - 传输限制检查
 - 黑名单管理
@@ -124,6 +128,7 @@ npm run verify:mainnet
 - 角色管理
 
 **关键角色：**
+
 - `MINTER_ROLE`: 铸币权限
 - `BURNER_ROLE`: 销毁权限
 - `BLACKLISTER_ROLE`: 黑名单管理权限
@@ -132,18 +137,22 @@ npm run verify:mainnet
 - `UPGRADER_ROLE`: 升级权限
 
 #### 2. USDTGovernance.sol
+
 多重签名治理合约，管理重要的系统参数和升级。
 
 **主要功能：**
+
 - 创建和管理提案
 - 投票系统
 - 执行延迟
 - 治理者管理
 
 #### 3. IERC1404.sol
+
 ERC-1404接口定义和限制代码库。
 
 **限制代码：**
+
 - `0` - SUCCESS: 传输允许
 - `1` - FAILURE: 传输失败
 - `2` - BLACKLISTED_SENDER: 发送方被黑名单
@@ -228,7 +237,7 @@ const isPaused = await usdtToken.paused();
 const restrictionCode = await usdtToken.detectTransferRestriction(
   fromAddress,
   toAddress,
-  amount
+  amount,
 );
 
 // 获取限制消息
@@ -253,7 +262,7 @@ const proposalId = await governance.propose(
   targetAddress,
   value,
   callData,
-  description
+  description,
 );
 ```
 
@@ -304,21 +313,25 @@ npm run gas-reporter
 ## 🔒 安全注意事项
 
 ### 1. 权限管理
+
 - 仔细管理各种角色权限
 - 使用多重签名管理关键操作
 - 定期审查权限分配
 
 ### 2. 升级安全
+
 - 使用时间锁执行升级
 - 充分测试升级合约
 - 准备紧急暂停机制
 
 ### 3. 合规性
+
 - 确保KYC流程完整
 - 及时更新黑名单
 - 监控大额交易
 
 ### 4. 审计
+
 - 定期进行安全审计
 - 使用静态分析工具
 - 监控合约事件
@@ -331,8 +344,14 @@ npm run gas-reporter
 
 ```solidity
 // ERC-1404函数
-function detectTransferRestriction(address from, address to, uint256 value) external view returns (uint8);
-function messageForTransferRestriction(uint8 restrictionCode) external view returns (string memory);
+function detectTransferRestriction(
+  address from,
+  address to,
+  uint256 value
+) external view returns (uint8);
+function messageForTransferRestriction(
+  uint8 restrictionCode
+) external view returns (string memory);
 
 // 铸币和销毁
 function mint(address to, uint256 amount) external;
@@ -416,6 +435,7 @@ MIT License - 详见LICENSE文件
 ## 🆘 支持
 
 如有问题，请：
+
 1. 查看文档和FAQ
 2. 搜索现有Issues
 3. 创建新Issue
@@ -432,4 +452,4 @@ MIT License - 详见LICENSE文件
 - [ ] 后端API
 - [ ] 监控和警报
 - [ ] 安全审计
-- [ ] 主网部署 
+- [ ] 主网部署

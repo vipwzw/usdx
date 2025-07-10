@@ -3,7 +3,7 @@ require("@openzeppelin/hardhat-upgrades");
 require("hardhat-contract-sizer");
 require("hardhat-gas-reporter");
 require("hardhat-docgen");
-require('dotenv').config();
+require("dotenv").config();
 
 const {
   PRIVATE_KEY,
@@ -14,7 +14,7 @@ const {
   OPTIMISMSCAN_API_KEY,
   COINMARKETCAP_API_KEY,
   INFURA_API_KEY,
-  ALCHEMY_API_KEY
+  ALCHEMY_API_KEY,
 } = process.env;
 
 // 获取优化器设置
@@ -25,9 +25,9 @@ const getOptimizerSettings = (runs = 200) => ({
     yul: true,
     yulDetails: {
       stackAllocation: true,
-      optimizerSteps: "dhfoDgvulfnTUtnIf"
-    }
-  }
+      optimizerSteps: "dhfoDgvulfnTUtnIf",
+    },
+  },
 });
 
 // 获取编译器设置
@@ -38,14 +38,14 @@ const getCompilerSettings = (version, runs = 200) => ({
     viaIR: process.env.VIA_IR === "true",
     metadata: {
       bytecodeHash: "none",
-      useLiteralContent: true
+      useLiteralContent: true,
     },
     outputSelection: {
       "*": {
-        "*": ["evm.bytecode", "evm.deployedBytecode", "devdoc", "userdoc", "metadata", "abi"]
-      }
-    }
-  }
+        "*": ["evm.bytecode", "evm.deployedBytecode", "devdoc", "userdoc", "metadata", "abi"],
+      },
+    },
+  },
 });
 
 module.exports = {
@@ -54,11 +54,11 @@ module.exports = {
       getCompilerSettings("0.8.19", 200),
       getCompilerSettings("0.8.20", 200),
       getCompilerSettings("0.8.22", 200), // 主要版本
-      getCompilerSettings("0.8.24", 200)
+      getCompilerSettings("0.8.24", 200),
     ],
     settings: {
-      optimizer: getOptimizerSettings(200)
-    }
+      optimizer: getOptimizerSettings(200),
+    },
   },
 
   paths: {
@@ -68,7 +68,7 @@ module.exports = {
     artifacts: "./artifacts",
     root: "./",
     sources: "./src",
-    tests: "./test"
+    tests: "./test",
   },
 
   networks: {
@@ -81,26 +81,32 @@ module.exports = {
       gasPrice: 20000000000,
       accounts: {
         count: 20,
-        accountsBalance: "10000000000000000000000" // 10000 ETH
+        accountsBalance: "10000000000000000000000", // 10000 ETH
       },
-      forking: process.env.FORK_URL ? {
-        url: process.env.FORK_URL,
-        blockNumber: process.env.FORK_BLOCK_NUMBER ? parseInt(process.env.FORK_BLOCK_NUMBER) : undefined
-      } : undefined,
+      forking: process.env.FORK_URL
+        ? {
+            url: process.env.FORK_URL,
+            blockNumber: process.env.FORK_BLOCK_NUMBER
+              ? parseInt(process.env.FORK_BLOCK_NUMBER)
+              : undefined,
+          }
+        : undefined,
       mining: {
         auto: true,
-        interval: process.env.MINING_INTERVAL ? parseInt(process.env.MINING_INTERVAL) : 0
-      }
+        interval: process.env.MINING_INTERVAL ? parseInt(process.env.MINING_INTERVAL) : 0,
+      },
     },
 
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
       timeout: 60000,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [
-        "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-        "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
-      ]
+      accounts: PRIVATE_KEY
+        ? [PRIVATE_KEY]
+        : [
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+            "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+          ],
     },
 
     // Ethereum networks
@@ -111,7 +117,7 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 1.2,
       timeout: 60000,
-      confirmations: 2
+      confirmations: 2,
     },
 
     sepolia: {
@@ -121,7 +127,7 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 1.2,
       timeout: 60000,
-      confirmations: 2
+      confirmations: 2,
     },
 
     mainnet: {
@@ -131,7 +137,7 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 1.1,
       timeout: 120000,
-      confirmations: 3
+      confirmations: 3,
     },
 
     // Layer 2 networks
@@ -141,7 +147,7 @@ module.exports = {
       chainId: 137,
       gasPrice: "auto",
       gasMultiplier: 1.2,
-      timeout: 60000
+      timeout: 60000,
     },
 
     arbitrum: {
@@ -149,7 +155,7 @@ module.exports = {
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 42161,
       gasPrice: "auto",
-      timeout: 60000
+      timeout: 60000,
     },
 
     optimism: {
@@ -157,8 +163,8 @@ module.exports = {
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 10,
       gasPrice: "auto",
-      timeout: 60000
-    }
+      timeout: 60000,
+    },
   },
 
   etherscan: {
@@ -173,9 +179,9 @@ module.exports = {
       arbitrumOne: ARBITRUMSCAN_API_KEY,
       arbitrumGoerli: ARBITRUMSCAN_API_KEY,
       optimisticEthereum: OPTIMISMSCAN_API_KEY,
-      optimisticGoerli: OPTIMISMSCAN_API_KEY
+      optimisticGoerli: OPTIMISMSCAN_API_KEY,
     },
-    customChains: []
+    customChains: [],
   },
 
   // Gas报告配置
@@ -199,7 +205,7 @@ module.exports = {
     coinmarketcap: COINMARKETCAP_API_KEY,
     rst: false,
     rstTitle: "Gas Usage",
-    onlyCalledMethods: true
+    onlyCalledMethods: true,
   },
 
   // 合约大小配置
@@ -209,17 +215,17 @@ module.exports = {
     runOnCompile: process.env.SIZE_CONTRACTS === "true",
     strict: false,
     only: process.env.SIZE_ONLY ? process.env.SIZE_ONLY.split(",") : undefined,
-    except: process.env.SIZE_EXCEPT ? process.env.SIZE_EXCEPT.split(",") : ["Mock", "Test"]
+    except: process.env.SIZE_EXCEPT ? process.env.SIZE_EXCEPT.split(",") : ["Mock", "Test"],
   },
 
   // 文档生成配置
   docgen: {
-    path: './docs',
+    path: "./docs",
     clear: true,
     runOnCompile: false,
     except: ["Mock", "Test", "console.sol"],
     pages: "files",
-    templates: "templates"
+    templates: "templates",
   },
 
   // Mocha测试配置
@@ -231,7 +237,9 @@ module.exports = {
     parallel: process.env.PARALLEL_TESTS === "true",
     jobs: process.env.PARALLEL_JOBS ? parseInt(process.env.PARALLEL_JOBS) : 4,
     reporter: process.env.MOCHA_REPORTER || "spec",
-    reporterOptions: process.env.MOCHA_REPORTER_OPTIONS ? JSON.parse(process.env.MOCHA_REPORTER_OPTIONS) : {}
+    reporterOptions: process.env.MOCHA_REPORTER_OPTIONS
+      ? JSON.parse(process.env.MOCHA_REPORTER_OPTIONS)
+      : {},
   },
 
   // TypeChain配置
@@ -240,21 +248,21 @@ module.exports = {
     target: "ethers-v6",
     alwaysGenerateOverloads: false,
     externalArtifacts: ["node_modules/@openzeppelin/contracts/build/contracts/*.json"],
-    dontOverrideCompile: false
+    dontOverrideCompile: false,
   },
 
   // 合约验证设置
   sourcify: {
     enabled: true,
     apiUrl: "https://sourcify.dev/server",
-    browserUrl: "https://sourcify.dev"
+    browserUrl: "https://sourcify.dev",
   },
 
   // 验证配置
   verify: {
     etherscan: {
-      apiKey: ETHERSCAN_API_KEY
-    }
+      apiKey: ETHERSCAN_API_KEY,
+    },
   },
 
   // 警告设置
@@ -262,8 +270,8 @@ module.exports = {
     "contracts/**/*": {
       "code-size": "error",
       "unused-param": "off",
-      "unused-var": "error"
-    }
+      "unused-var": "error",
+    },
   },
 
   // 默认网络
@@ -273,7 +281,9 @@ module.exports = {
   debug: process.env.DEBUG === "true",
 
   // 外部合约配置
-  external: process.env.EXTERNAL_DEPLOYMENTS ? {
-    contracts: JSON.parse(process.env.EXTERNAL_DEPLOYMENTS)
-  } : undefined
+  external: process.env.EXTERNAL_DEPLOYMENTS
+    ? {
+        contracts: JSON.parse(process.env.EXTERNAL_DEPLOYMENTS),
+      }
+    : undefined,
 };

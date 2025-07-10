@@ -7,11 +7,13 @@
 ## 🔧 准备工作
 
 ### 1. 环境要求
+
 - Node.js 18.0+
 - npm 或 yarn
 - Git
 
 ### 2. 安装依赖
+
 ```bash
 cd contracts
 npm install
@@ -22,6 +24,7 @@ npm install
 ### 方法一：使用自动化脚本
 
 #### Linux/macOS:
+
 ```bash
 cd contracts
 chmod +x scripts/start-local-test.sh
@@ -29,6 +32,7 @@ chmod +x scripts/start-local-test.sh
 ```
 
 #### Windows:
+
 ```cmd
 cd contracts
 scripts\start-local-test.bat
@@ -37,12 +41,14 @@ scripts\start-local-test.bat
 ### 方法二：手动执行
 
 #### 1. 编译合约
+
 ```bash
 cd contracts
 npx hardhat compile
 ```
 
 #### 2. 运行测试
+
 ```bash
 # 运行本地部署测试
 npx hardhat run scripts/local-test.js --network hardhat
@@ -60,6 +66,7 @@ npm run test:gas
 ## 🔑 测试账户信息
 
 ### 默认测试账户
+
 本地测试使用 Hardhat 默认的测试账户：
 
 ```javascript
@@ -114,7 +121,7 @@ npm run test:gas
 👥 可用账户:
    账户 0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    余额: 10000.0 ETH
-   
+
 📦 开始部署合约...
 🏗️  部署 USDXToken...
 ✅ USDXToken 部署成功: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
@@ -145,18 +152,18 @@ module.exports = {
       name: "USDX Stablecoin",
       symbol: "USDX",
       initialSupply: "1000000000000000000000000000", // 1 billion tokens
-      initialOwner: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      initialOwner: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
     },
     governance: {
       governors: [
         "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       ],
       requiredVotes: 2,
       votingPeriod: 86400, // 24 hours
-      executionDelay: 3600 // 1 hour
-    }
-  }
+      executionDelay: 3600, // 1 hour
+    },
+  },
 };
 ```
 
@@ -215,15 +222,17 @@ npx hardhat size          # 检查合约大小
 ### 常见问题
 
 1. **端口占用**
+
    ```bash
    # 查找占用端口 8545 的进程
    lsof -i :8545
-   
+
    # 终止进程
    kill -9 <PID>
    ```
 
 2. **依赖问题**
+
    ```bash
    # 清理并重新安装依赖
    rm -rf node_modules package-lock.json
@@ -253,4 +262,4 @@ npx hardhat size          # 检查合约大小
 ---
 
 ✅ **本地测试配置完成！**
-现在您可以在本地环境中安全地测试 USDX 稳定币合约了。 
+现在您可以在本地环境中安全地测试 USDX 稳定币合约了。

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * @title ERC-1404 Simple Restricted Token Standard
@@ -95,7 +95,8 @@ library RestrictionMessages {
         if (restrictionCode == RestrictionCodes.INVALID_KYC_RECEIVER) return "Receiver KYC invalid";
         if (restrictionCode == RestrictionCodes.AMOUNT_EXCEEDS_LIMIT) return "Amount exceeds limit";
         if (restrictionCode == RestrictionCodes.SANCTIONED_ADDRESS) return "Address sanctioned";
-        if (restrictionCode == RestrictionCodes.UNAUTHORIZED_TRANSFER) return "Transfer unauthorized";
+        if (restrictionCode == RestrictionCodes.UNAUTHORIZED_TRANSFER)
+            return "Transfer unauthorized";
         if (restrictionCode == RestrictionCodes.INVALID_RECIPIENT) return "Invalid recipient";
         if (restrictionCode == RestrictionCodes.TRANSFER_LOCKED) return "Transfer locked";
         if (restrictionCode == RestrictionCodes.COMPLIANCE_VIOLATION) return "Compliance violation";

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title USDX Governance Contract
@@ -109,11 +109,7 @@ contract USDXGovernance is
     /// @param proposalId The ID of the proposal voted on
     /// @param voter The address that cast the vote
     /// @param support Whether the vote is in support of the proposal
-    event VoteCast(
-        uint256 indexed proposalId,
-        address indexed voter,
-        bool support
-    );
+    event VoteCast(uint256 indexed proposalId, address indexed voter, bool support);
 
     /// @notice Emitted when a proposal is executed
     /// @param proposalId The ID of the executed proposal
@@ -259,11 +255,10 @@ contract USDXGovernance is
      * @param proposalId ID of the proposal
      * @param support Whether to support the proposal
      */
-    function castVote(uint256 proposalId, bool support)
-        external
-        onlyGovernor
-        proposalExists(proposalId)
-    {
+    function castVote(
+        uint256 proposalId,
+        bool support
+    ) external onlyGovernor proposalExists(proposalId) {
         Proposal storage proposal = proposals[proposalId];
 
         if (block.timestamp > proposal.votingDeadline) {
@@ -292,12 +287,9 @@ contract USDXGovernance is
      * @notice Executes a proposal if conditions are met
      * @param proposalId ID of the proposal to execute
      */
-    function execute(uint256 proposalId)
-        external
-        onlyGovernor
-        proposalExists(proposalId)
-        nonReentrant
-    {
+    function execute(
+        uint256 proposalId
+    ) external onlyGovernor proposalExists(proposalId) nonReentrant {
         Proposal storage proposal = proposals[proposalId];
 
         if (block.timestamp <= proposal.votingDeadline) {
@@ -317,16 +309,14 @@ contract USDXGovernance is
         }
 
         // Check execution delay
-        if (
-            block.timestamp < proposal.votingDeadline + executionDelay
-        ) {
+        if (block.timestamp < proposal.votingDeadline + executionDelay) {
             revert ExecutionDelayNotMet();
         }
 
         proposal.executed = true;
 
         // Execute the proposal
-        (bool success, bytes memory returnData) = proposal.target.call{value: proposal.value}(
+        (bool success, bytes memory returnData) = proposal.target.call{ value: proposal.value }(
             proposal.data
         );
 
@@ -341,10 +331,7 @@ contract USDXGovernance is
      * @notice Cancels a proposal
      * @param proposalId ID of the proposal to cancel
      */
-    function cancel(uint256 proposalId)
-        external
-        proposalExists(proposalId)
-    {
+    function cancel(uint256 proposalId) external proposalExists(proposalId) {
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.executed) {
@@ -353,10 +340,7 @@ contract USDXGovernance is
         if (proposal.cancelled) {
             revert AlreadyCancelled();
         }
-        if (
-            msg.sender != proposal.proposer &&
-            !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
-        ) {
+        if (msg.sender != proposal.proposer && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
             revert OnlyProposerCanCancel();
         }
 
@@ -369,10 +353,7 @@ contract USDXGovernance is
      * @notice Adds a new governor
      * @param governor Address of the new governor
      */
-    function addGovernor(address governor)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function addGovernor(address governor) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _addGovernor(governor);
     }
 
@@ -380,10 +361,7 @@ contract USDXGovernance is
      * @notice Removes a governor
      * @param governor Address of the governor to remove
      */
-    function removeGovernor(address governor)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function removeGovernor(address governor) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!governors[governor]) {
             revert NotAGovernor();
         }
@@ -410,10 +388,7 @@ contract USDXGovernance is
      * @notice Sets the required votes threshold
      * @param newRequired New required votes threshold
      */
-    function setRequiredVotes(uint256 newRequired)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setRequiredVotes(uint256 newRequired) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newRequired == 0 || newRequired > governorList.length) {
             revert InvalidRequiredVotes();
         }
@@ -428,10 +403,7 @@ contract USDXGovernance is
      * @notice Sets the voting period
      * @param newPeriod New voting period in seconds
      */
-    function setVotingPeriod(uint256 newPeriod)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setVotingPeriod(uint256 newPeriod) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newPeriod == 0) {
             revert VotingPeriodMustBePositive();
         }
@@ -446,10 +418,7 @@ contract USDXGovernance is
      * @notice Sets the execution delay
      * @param newDelay New execution delay in seconds
      */
-    function setExecutionDelay(uint256 newDelay)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setExecutionDelay(uint256 newDelay) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 oldDelay = executionDelay;
         executionDelay = newDelay;
 
@@ -479,11 +448,9 @@ contract USDXGovernance is
      * @notice Authorize contract upgrades
      * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     /**
      * @notice Gets proposal details
@@ -502,19 +469,24 @@ contract USDXGovernance is
      */
     function getProposal(
         uint256 proposalId
-    ) external view proposalExists(proposalId) returns (
-        uint256 id,
-        address proposer,
-        address target,
-        uint256 value,
-        bytes memory data,
-        string memory description,
-        uint256 votingDeadline,
-        bool executed,
-        bool cancelled,
-        uint256 forVotes,
-        uint256 againstVotes
-    ) {
+    )
+        external
+        view
+        proposalExists(proposalId)
+        returns (
+            uint256 id,
+            address proposer,
+            address target,
+            uint256 value,
+            bytes memory data,
+            string memory description,
+            uint256 votingDeadline,
+            bool executed,
+            bool cancelled,
+            uint256 forVotes,
+            uint256 againstVotes
+        )
+    {
         Proposal storage proposal = proposals[proposalId];
         return (
             proposal.id,
@@ -536,12 +508,9 @@ contract USDXGovernance is
      * @param proposalId ID of the proposal
      * @return The state of the proposal as a string
      */
-    function getProposalState(uint256 proposalId)
-        external
-        view
-        proposalExists(proposalId)
-        returns (string memory)
-    {
+    function getProposalState(
+        uint256 proposalId
+    ) external view proposalExists(proposalId) returns (string memory) {
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.cancelled) {
@@ -577,12 +546,10 @@ contract USDXGovernance is
      * @param voter Address to check
      * @return True if the address has voted
      */
-    function hasVoted(uint256 proposalId, address voter)
-        external
-        view
-        proposalExists(proposalId)
-        returns (bool)
-    {
+    function hasVoted(
+        uint256 proposalId,
+        address voter
+    ) external view proposalExists(proposalId) returns (bool) {
         return proposals[proposalId].hasVoted[voter];
     }
 
@@ -592,12 +559,10 @@ contract USDXGovernance is
      * @param voter Address to check
      * @return The vote choice (true for support, false for against)
      */
-    function getVoteChoice(uint256 proposalId, address voter)
-        external
-        view
-        proposalExists(proposalId)
-        returns (bool)
-    {
+    function getVoteChoice(
+        uint256 proposalId,
+        address voter
+    ) external view proposalExists(proposalId) returns (bool) {
         if (!proposals[proposalId].hasVoted[voter]) {
             revert VoterHasNotVoted();
         }

@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { ERC20PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IERC1404} from "./interfaces/IERC1404.sol";
-
+import { IERC1404 } from "./interfaces/IERC1404.sol";
 
 /**
  * @title USDX Stablecoin Token
@@ -175,8 +174,8 @@ contract USDXToken is
         _grantRole(COMPLIANCE_ROLE, admin);
 
         // Set default parameters
-        _maxTransferAmount = 1000000 * 10**decimals(); // 1M tokens
-        _minTransferAmount = 1 * 10**decimals(); // 1 token
+        _maxTransferAmount = 1000000 * 10 ** decimals(); // 1M tokens
+        _minTransferAmount = 1 * 10 ** decimals(); // 1 token
         _maxHolderCount = 2000; // Maximum holders
         _kycRequired = true;
         _whitelistEnabled = true;
@@ -300,7 +299,10 @@ contract USDXToken is
         if (from != address(0) && to != address(0)) {
             uint8 restrictionCode = detectTransferRestriction(from, to, amount);
             if (restrictionCode != SUCCESS) {
-                revert TransferRestricted(restrictionCode, messageForTransferRestriction(restrictionCode));
+                revert TransferRestricted(
+                    restrictionCode,
+                    messageForTransferRestriction(restrictionCode)
+                );
             }
 
             // Update daily transfer tracking
@@ -331,11 +333,7 @@ contract USDXToken is
      * @param to Recipient address
      * @param amount Amount to mint
      */
-    function mint(address to, uint256 amount)
-        external
-        onlyRole(MINTER_ROLE)
-        nonReentrant
-    {
+    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) nonReentrant {
         if (to == address(0)) {
             revert CannotMintToZeroAddress();
         }
@@ -364,11 +362,7 @@ contract USDXToken is
      * @param from Address to burn from
      * @param amount Amount to burn
      */
-    function burnFrom(address from, uint256 amount)
-        external
-        onlyRole(BURNER_ROLE)
-        nonReentrant
-    {
+    function burnFrom(address from, uint256 amount) external onlyRole(BURNER_ROLE) nonReentrant {
         if (from == address(0)) {
             revert CannotBurnFromZeroAddress();
         }
@@ -387,10 +381,7 @@ contract USDXToken is
      * @param account Address to update
      * @param blacklisted Whether to blacklist the address
      */
-    function setBlacklisted(address account, bool blacklisted)
-        external
-        onlyRole(BLACKLISTER_ROLE)
-    {
+    function setBlacklisted(address account, bool blacklisted) external onlyRole(BLACKLISTER_ROLE) {
         if (account == address(0)) {
             revert CannotBlacklistZeroAddress();
         }
@@ -403,10 +394,7 @@ contract USDXToken is
      * @param account Address to update
      * @param verified Whether the address is KYC verified
      */
-    function setKYCVerified(address account, bool verified)
-        external
-        onlyRole(COMPLIANCE_ROLE)
-    {
+    function setKYCVerified(address account, bool verified) external onlyRole(COMPLIANCE_ROLE) {
         if (account == address(0)) {
             revert CannotSetKYCForZeroAddress();
         }
@@ -419,10 +407,10 @@ contract USDXToken is
      * @param account Address to set limit for
      * @param limit Daily transfer limit
      */
-    function setDailyTransferLimit(address account, uint256 limit)
-        external
-        onlyRole(COMPLIANCE_ROLE)
-    {
+    function setDailyTransferLimit(
+        address account,
+        uint256 limit
+    ) external onlyRole(COMPLIANCE_ROLE) {
         if (account == address(0)) {
             revert CannotSetLimitForZeroAddress();
         }
@@ -435,10 +423,7 @@ contract USDXToken is
      * @param account Address to update
      * @param sanctioned Whether the address is sanctioned
      */
-    function setSanctioned(address account, bool sanctioned)
-        external
-        onlyRole(COMPLIANCE_ROLE)
-    {
+    function setSanctioned(address account, bool sanctioned) external onlyRole(COMPLIANCE_ROLE) {
         if (account == address(0)) {
             revert CannotSanctionZeroAddress();
         }
@@ -532,11 +517,9 @@ contract USDXToken is
      * @notice Authorize contract upgrades
      * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     // View functions for getting restriction states
 
