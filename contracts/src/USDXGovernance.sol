@@ -19,6 +19,33 @@ contract USDXGovernance is
     ReentrancyGuardUpgradeable,
     UUPSUpgradeable
 {
+    // Custom Errors
+    error NotGovernor();
+    error ProposalDoesNotExist();
+    error InvalidTokenAddress();
+    error MustHaveAtLeastOneGovernor();
+    error InvalidRequiredVotes();
+    error InvalidTargetAddress();
+    error DescriptionCannotBeEmpty();
+    error VotingHasEnded();
+    error ProposalCancelled();
+    error AlreadyVoted();
+    error VotingStillActive();
+    error ProposalAlreadyExecuted();
+    error InsufficientVotes();
+    error ProposalRejected();
+    error ExecutionDelayNotMet();
+    error ExecutionFailed(bytes returnData);
+    error CannotCancelExecutedProposal();
+    error AlreadyCancelled();
+    error OnlyProposerCanCancel();
+    error NotAGovernor();
+    error CannotRemoveLastGovernor();
+    error VotingPeriodMustBePositive();
+    error InvalidGovernorAddress();
+    error AlreadyAGovernor();
+    error VoterHasNotVoted();
+
     // Roles
     /// @notice Role identifier for governance participants
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
@@ -121,12 +148,16 @@ contract USDXGovernance is
 
     // Modifiers
     modifier onlyGovernor() {
-        require(governors[msg.sender], "Must be governor");
+        if (!governors[msg.sender]) {
+            revert NotGovernor();
+        }
         _;
     }
 
     modifier proposalExists(uint256 proposalId) {
-        require(proposalId < proposalCount, "Proposal does not exist");
+        if (proposalId >= proposalCount) {
+            revert ProposalDoesNotExist();
+        }
         _;
     }
 
@@ -151,9 +182,15 @@ contract USDXGovernance is
         uint256 votingPeriod_,
         uint256 executionDelay_
     ) public initializer {
-        require(tokenAddress != address(0), "Invalid token address");
-        require(initialGovernors.length > 0, "Must have at least one governor");
-        require(requiredVotes_ > 0 && requiredVotes_ <= initialGovernors.length, "Invalid required votes");
+        if (tokenAddress == address(0)) {
+            revert InvalidTokenAddress();
+        }
+        if (initialGovernors.length == 0) {
+            revert MustHaveAtLeastOneGovernor();
+        }
+        if (requiredVotes_ == 0 || requiredVotes_ > initialGovernors.length) {
+            revert InvalidRequiredVotes();
+        }
 
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -188,8 +225,12 @@ contract USDXGovernance is
         bytes memory data,
         string memory description
     ) external onlyGovernor returns (uint256 proposalId) {
-        require(target != address(0), "Invalid target address");
-        require(bytes(description).length > 0, "Description cannot be empty");
+        if (target == address(0)) {
+            revert InvalidTargetAddress();
+        }
+        if (bytes(description).length == 0) {
+            revert DescriptionCannotBeEmpty();
+        }
 
         proposalId = proposalCount++;
         Proposal storage proposal = proposals[proposalId];
@@ -225,9 +266,15 @@ contract USDXGovernance is
     {
         Proposal storage proposal = proposals[proposalId];
 
-        require(block.timestamp <= proposal.votingDeadline, "Voting has ended");
-        require(!proposal.cancelled, "Proposal cancelled");
-        require(!proposal.hasVoted[msg.sender], "Already voted");
+        if (block.timestamp > proposal.votingDeadline) {
+            revert VotingHasEnded();
+        }
+        if (proposal.cancelled) {
+            revert ProposalCancelled();
+        }
+        if (proposal.hasVoted[msg.sender]) {
+            revert AlreadyVoted();
+        }
 
         proposal.hasVoted[msg.sender] = true;
         proposal.voteChoice[msg.sender] = support;
@@ -253,17 +300,28 @@ contract USDXGovernance is
     {
         Proposal storage proposal = proposals[proposalId];
 
-        require(block.timestamp > proposal.votingDeadline, "Voting still active");
-        require(!proposal.executed, "Proposal already executed");
-        require(!proposal.cancelled, "Proposal cancelled");
-        require(proposal.forVotes >= requiredVotes, "Insufficient votes");
-        require(proposal.forVotes > proposal.againstVotes, "Proposal rejected");
+        if (block.timestamp <= proposal.votingDeadline) {
+            revert VotingStillActive();
+        }
+        if (proposal.executed) {
+            revert ProposalAlreadyExecuted();
+        }
+        if (proposal.cancelled) {
+            revert ProposalCancelled();
+        }
+        if (proposal.forVotes < requiredVotes) {
+            revert InsufficientVotes();
+        }
+        if (proposal.forVotes <= proposal.againstVotes) {
+            revert ProposalRejected();
+        }
 
         // Check execution delay
-        require(
-            block.timestamp >= proposal.votingDeadline + executionDelay,
-            "Execution delay not met"
-        );
+        if (
+            block.timestamp < proposal.votingDeadline + executionDelay
+        ) {
+            revert ExecutionDelayNotMet();
+        }
 
         proposal.executed = true;
 
@@ -272,7 +330,9 @@ contract USDXGovernance is
             proposal.data
         );
 
-        require(success, string(returnData));
+        if (!success) {
+            revert ExecutionFailed(returnData);
+        }
 
         emit ProposalExecuted(proposalId);
     }
@@ -287,12 +347,18 @@ contract USDXGovernance is
     {
         Proposal storage proposal = proposals[proposalId];
 
-        require(!proposal.executed, "Cannot cancel executed proposal");
-        require(!proposal.cancelled, "Already cancelled");
-        require(
-            msg.sender == proposal.proposer || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "Only proposer or admin can cancel"
-        );
+        if (proposal.executed) {
+            revert CannotCancelExecutedProposal();
+        }
+        if (proposal.cancelled) {
+            revert AlreadyCancelled();
+        }
+        if (
+            msg.sender != proposal.proposer &&
+            !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) {
+            revert OnlyProposerCanCancel();
+        }
 
         proposal.cancelled = true;
 
@@ -318,8 +384,12 @@ contract USDXGovernance is
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        require(governors[governor], "Not a governor");
-        require(governorList.length > 1, "Cannot remove last governor");
+        if (!governors[governor]) {
+            revert NotAGovernor();
+        }
+        if (governorList.length <= 1) {
+            revert CannotRemoveLastGovernor();
+        }
 
         governors[governor] = false;
         _revokeRole(GOVERNOR_ROLE, governor);
@@ -344,7 +414,9 @@ contract USDXGovernance is
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        require(newRequired > 0 && newRequired <= governorList.length, "Invalid required votes");
+        if (newRequired == 0 || newRequired > governorList.length) {
+            revert InvalidRequiredVotes();
+        }
 
         uint256 oldRequired = requiredVotes;
         requiredVotes = newRequired;
@@ -360,7 +432,9 @@ contract USDXGovernance is
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        require(newPeriod > 0, "Voting period must be positive");
+        if (newPeriod == 0) {
+            revert VotingPeriodMustBePositive();
+        }
 
         uint256 oldPeriod = votingPeriod;
         votingPeriod = newPeriod;
@@ -387,8 +461,12 @@ contract USDXGovernance is
      * @param governor Address of the governor to add
      */
     function _addGovernor(address governor) internal {
-        require(governor != address(0), "Invalid governor address");
-        require(!governors[governor], "Already a governor");
+        if (governor == address(0)) {
+            revert InvalidGovernorAddress();
+        }
+        if (governors[governor]) {
+            revert AlreadyAGovernor();
+        }
 
         governors[governor] = true;
         governorList.push(governor);
@@ -520,7 +598,9 @@ contract USDXGovernance is
         proposalExists(proposalId)
         returns (bool)
     {
-        require(proposals[proposalId].hasVoted[voter], "Voter has not voted");
+        if (!proposals[proposalId].hasVoted[voter]) {
+            revert VoterHasNotVoted();
+        }
         return proposals[proposalId].voteChoice[voter];
     }
 

@@ -27,6 +27,21 @@ contract USDXToken is
     UUPSUpgradeable,
     IERC1404
 {
+    // Custom Errors
+    error AdminCannotBeZeroAddress();
+    error TransferRestricted(uint8 restrictionCode, string message);
+    error ReceiverBlacklisted();
+    error ReceiverKYCRequired();
+    error AddressSanctioned();
+    error CannotMintToZeroAddress();
+    error BurnAmountMustBeGreaterThanZero();
+    error InsufficientBalanceToBurn();
+    error CannotBurnFromZeroAddress();
+    error CannotBlacklistZeroAddress();
+    error CannotSetKYCForZeroAddress();
+    error CannotSetLimitForZeroAddress();
+    error CannotSanctionZeroAddress();
+
     // Roles
     /// @notice Role identifier for addresses that can mint tokens
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -140,7 +155,9 @@ contract USDXToken is
         uint256 initialSupply,
         address admin
     ) public initializer {
-        require(admin != address(0), "Admin cannot be zero address");
+        if (admin == address(0)) {
+            revert AdminCannotBeZeroAddress();
+        }
 
         __ERC20_init(name, symbol);
         __ERC20Pausable_init();
@@ -282,8 +299,9 @@ contract USDXToken is
         // Check ERC-1404 transfer restrictions only for regular transfers (not mint/burn)
         if (from != address(0) && to != address(0)) {
             uint8 restrictionCode = detectTransferRestriction(from, to, amount);
-            require(restrictionCode == SUCCESS,
-                    messageForTransferRestriction(restrictionCode));
+            if (restrictionCode != SUCCESS) {
+                revert TransferRestricted(restrictionCode, messageForTransferRestriction(restrictionCode));
+            }
 
             // Update daily transfer tracking
             _updateDailyTransferAmount(from, amount);
@@ -294,13 +312,13 @@ contract USDXToken is
             // Skip pause check (already done by super._beforeTokenTransfer)
             // Check other restrictions
             if (_blacklisted[to]) {
-                revert("Receiver address is blacklisted");
+                revert ReceiverBlacklisted();
             }
             if (_kycRequired && !_kycVerified[to]) {
-                revert("Receiver KYC verification required");
+                revert ReceiverKYCRequired();
             }
             if (_sanctioned[to]) {
-                revert("Address is sanctioned");
+                revert AddressSanctioned();
             }
         }
 
@@ -318,7 +336,9 @@ contract USDXToken is
         onlyRole(MINTER_ROLE)
         nonReentrant
     {
-        require(to != address(0), "Cannot mint to zero address");
+        if (to == address(0)) {
+            revert CannotMintToZeroAddress();
+        }
 
         // Check pause status first (will be caught by _beforeTokenTransfer)
         _mint(to, amount);
@@ -329,8 +349,12 @@ contract USDXToken is
      * @param amount Amount to burn
      */
     function burn(uint256 amount) external nonReentrant {
-        require(amount > 0, "Burn amount must be greater than zero");
-        require(balanceOf(msg.sender) >= amount, "Insufficient balance to burn");
+        if (amount == 0) {
+            revert BurnAmountMustBeGreaterThanZero();
+        }
+        if (balanceOf(msg.sender) < amount) {
+            revert InsufficientBalanceToBurn();
+        }
 
         _burn(msg.sender, amount);
     }
@@ -345,9 +369,15 @@ contract USDXToken is
         onlyRole(BURNER_ROLE)
         nonReentrant
     {
-        require(from != address(0), "Cannot burn from zero address");
-        require(amount > 0, "Burn amount must be greater than zero");
-        require(balanceOf(from) >= amount, "Insufficient balance to burn");
+        if (from == address(0)) {
+            revert CannotBurnFromZeroAddress();
+        }
+        if (amount == 0) {
+            revert BurnAmountMustBeGreaterThanZero();
+        }
+        if (balanceOf(from) < amount) {
+            revert InsufficientBalanceToBurn();
+        }
 
         _burn(from, amount);
     }
@@ -361,7 +391,9 @@ contract USDXToken is
         external
         onlyRole(BLACKLISTER_ROLE)
     {
-        require(account != address(0), "Cannot blacklist zero address");
+        if (account == address(0)) {
+            revert CannotBlacklistZeroAddress();
+        }
         _blacklisted[account] = blacklisted;
         emit BlacklistUpdated(account, blacklisted);
     }
@@ -375,7 +407,9 @@ contract USDXToken is
         external
         onlyRole(COMPLIANCE_ROLE)
     {
-        require(account != address(0), "Cannot set KYC for zero address");
+        if (account == address(0)) {
+            revert CannotSetKYCForZeroAddress();
+        }
         _kycVerified[account] = verified;
         emit KYCStatusUpdated(account, verified);
     }
@@ -389,7 +423,9 @@ contract USDXToken is
         external
         onlyRole(COMPLIANCE_ROLE)
     {
-        require(account != address(0), "Cannot set limit for zero address");
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
         _dailyTransferLimit[account] = limit;
         emit DailyTransferLimitUpdated(account, limit);
     }
@@ -403,7 +439,9 @@ contract USDXToken is
         external
         onlyRole(COMPLIANCE_ROLE)
     {
-        require(account != address(0), "Cannot sanction zero address");
+        if (account == address(0)) {
+            revert CannotSanctionZeroAddress();
+        }
         _sanctioned[account] = sanctioned;
         emit SanctionStatusUpdated(account, sanctioned);
     }
