@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "./interfaces/IERC1404.sol";
+import {IERC1404} from "./interfaces/IERC1404.sol";
 
 
 /**
  * @title USDX Stablecoin Token
- * @dev ERC-1404 compliant stablecoin with transfer restrictions
+ * @notice ERC-1404 compliant stablecoin with transfer restrictions and compliance features
+ * @dev This contract implements a stablecoin with built-in compliance, transfer restrictions,
+ *      KYC verification, blacklisting, and sanction screening capabilities
  * @author USDX Stablecoin Team
  */
 contract USDXToken is
@@ -26,25 +28,43 @@ contract USDXToken is
     IERC1404
 {
     // Roles
+    /// @notice Role identifier for addresses that can mint tokens
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    /// @notice Role identifier for addresses that can burn tokens
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    /// @notice Role identifier for addresses that can pause/unpause the contract
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    /// @notice Role identifier for addresses that can manage blacklist
     bytes32 public constant BLACKLISTER_ROLE = keccak256("BLACKLISTER_ROLE");
+    /// @notice Role identifier for addresses that can upgrade the contract
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    /// @notice Role identifier for addresses that can manage compliance settings
     bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE");
 
     // Restriction codes
+    /// @notice Success code indicating no transfer restrictions
     uint8 public constant SUCCESS = 0;
+    /// @notice General failure code
     uint8 public constant FAILURE = 1;
+    /// @notice Restriction code for blacklisted sender
     uint8 public constant BLACKLISTED_SENDER = 2;
+    /// @notice Restriction code for blacklisted receiver
     uint8 public constant BLACKLISTED_RECEIVER = 3;
+    /// @notice Restriction code for insufficient balance
     uint8 public constant INSUFFICIENT_BALANCE = 4;
+    /// @notice Restriction code when contract is paused
     uint8 public constant PAUSED = 5;
+    /// @notice Restriction code for invalid KYC sender
     uint8 public constant INVALID_KYC_SENDER = 6;
+    /// @notice Restriction code for invalid KYC receiver
     uint8 public constant INVALID_KYC_RECEIVER = 7;
+    /// @notice Restriction code when amount exceeds limits
     uint8 public constant AMOUNT_EXCEEDS_LIMIT = 8;
+    /// @notice Restriction code for sanctioned address
     uint8 public constant SANCTIONED_ADDRESS = 9;
+    /// @notice Restriction code when holder limit exceeded
     uint8 public constant EXCEEDS_HOLDER_LIMIT = 10;
+    /// @notice Restriction code for region restrictions
     uint8 public constant REGION_RESTRICTION = 11;
 
     // State variables
@@ -55,32 +75,60 @@ contract USDXToken is
     mapping(address => uint256) private _dailyTransferAmount;
     mapping(address => uint256) private _lastTransferDay;
     mapping(address => uint256) private _regionCode;
-    
+
     uint256 private _maxTransferAmount;
     uint256 private _minTransferAmount;
     uint256 private _maxHolderCount;
     uint256 private _currentHolderCount;
-    
+
     bool private _kycRequired;
     bool private _whitelistEnabled;
     bool private _regionRestrictionsEnabled;
 
     // Events
+    /// @notice Emitted when blacklist status is updated
+    /// @param account The address whose blacklist status was updated
+    /// @param blacklisted True if the address is blacklisted, false otherwise
     event BlacklistUpdated(address indexed account, bool blacklisted);
+
+    /// @notice Emitted when KYC status is updated
+    /// @param account The address whose KYC status was updated
+    /// @param verified True if the address is KYC verified, false otherwise
     event KYCStatusUpdated(address indexed account, bool verified);
+
+    /// @notice Emitted when sanction status is updated
+    /// @param account The address whose sanction status was updated
+    /// @param sanctioned True if the address is sanctioned, false otherwise
     event SanctionStatusUpdated(address indexed account, bool sanctioned);
+
+    /// @notice Emitted when daily transfer limit is updated
+    /// @param account The address whose limit was updated
+    /// @param limit The new daily transfer limit
     event DailyTransferLimitUpdated(address indexed account, uint256 limit);
+
+    /// @notice Emitted when compliance configuration is updated
+    /// @param kycRequired True if KYC is required for transfers
+    /// @param whitelistEnabled True if whitelist is enabled
+    /// @param regionRestricted True if region restrictions are enabled
     event ComplianceConfigUpdated(bool kycRequired, bool whitelistEnabled, bool regionRestricted);
+
+    /// @notice Emitted when transfer limits are updated
+    /// @param maxAmount Maximum transfer amount
+    /// @param minAmount Minimum transfer amount
     event TransferLimitsUpdated(uint256 maxAmount, uint256 minAmount);
+
+    /// @notice Emitted when holder limits are updated
+    /// @param maxHolders Maximum number of token holders allowed
     event HolderLimitsUpdated(uint256 maxHolders);
 
+    /// @notice Prevents implementation contract from being initialized
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
     /**
-     * @dev Initializes the token with basic parameters
+     * @notice Initializes the token with basic parameters
      * @param name Token name
      * @param symbol Token symbol
      * @param initialSupply Initial token supply
@@ -93,7 +141,7 @@ contract USDXToken is
         address admin
     ) public initializer {
         require(admin != address(0), "Admin cannot be zero address");
-        
+
         __ERC20_init(name, symbol);
         __ERC20Pausable_init();
         __AccessControl_init();
@@ -128,14 +176,15 @@ contract USDXToken is
     }
 
     /**
-     * @dev Returns 6 decimals for USDX token
+     * @notice Returns 6 decimals for USDX token
+     * @return The number of decimals (6)
      */
     function decimals() public pure override returns (uint8) {
         return 6;
     }
 
     /**
-     * @dev ERC-1404 implementation: Detect transfer restriction
+     * @notice ERC-1404 implementation: Detect transfer restriction
      * @param from Sender address
      * @param to Recipient address
      * @param value Transfer amount
@@ -206,9 +255,9 @@ contract USDXToken is
     }
 
     /**
-     * @dev ERC-1404 implementation: Get restriction message
+     * @notice ERC-1404 implementation: Get restriction message
      * @param restrictionCode Restriction code
-     * @return Human-readable message
+     * @return Human-readable message for the restriction
      */
     function messageForTransferRestriction(
         uint8 restrictionCode
@@ -217,7 +266,7 @@ contract USDXToken is
     }
 
     /**
-     * @dev Override _beforeTokenTransfer to implement ERC-1404 restrictions and handle balance tracking
+     * @notice Override _beforeTokenTransfer to implement ERC-1404 restrictions and handle balance tracking
      * @param from Sender address
      * @param to Recipient address
      * @param amount Transfer amount
@@ -229,17 +278,17 @@ contract USDXToken is
     ) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
         // Call parent _beforeTokenTransfer function first (includes pause check)
         super._beforeTokenTransfer(from, to, amount);
-        
+
         // Check ERC-1404 transfer restrictions only for regular transfers (not mint/burn)
         if (from != address(0) && to != address(0)) {
             uint8 restrictionCode = detectTransferRestriction(from, to, amount);
-            require(restrictionCode == SUCCESS, 
+            require(restrictionCode == SUCCESS,
                     messageForTransferRestriction(restrictionCode));
-            
+
             // Update daily transfer tracking
             _updateDailyTransferAmount(from, amount);
         }
-        
+
         // For minting operations, check ERC-1404 restrictions (excluding pause check)
         if (from == address(0) && to != address(0)) {
             // Skip pause check (already done by super._beforeTokenTransfer)
@@ -260,57 +309,57 @@ contract USDXToken is
     }
 
     /**
-     * @dev Mints tokens to specified address
+     * @notice Mints tokens to specified address
      * @param to Recipient address
      * @param amount Amount to mint
      */
-    function mint(address to, uint256 amount) 
-        external 
-        onlyRole(MINTER_ROLE) 
-        nonReentrant 
+    function mint(address to, uint256 amount)
+        external
+        onlyRole(MINTER_ROLE)
+        nonReentrant
     {
         require(to != address(0), "Cannot mint to zero address");
-        
+
         // Check pause status first (will be caught by _beforeTokenTransfer)
         _mint(to, amount);
     }
 
     /**
-     * @dev Burns tokens from caller's address
+     * @notice Burns tokens from caller's address
      * @param amount Amount to burn
      */
     function burn(uint256 amount) external nonReentrant {
         require(amount > 0, "Burn amount must be greater than zero");
         require(balanceOf(msg.sender) >= amount, "Insufficient balance to burn");
-        
+
         _burn(msg.sender, amount);
     }
 
     /**
-     * @dev Burns tokens from specified address (requires BURNER_ROLE)
+     * @notice Burns tokens from specified address (requires BURNER_ROLE)
      * @param from Address to burn from
      * @param amount Amount to burn
      */
-    function burnFrom(address from, uint256 amount) 
-        external 
-        onlyRole(BURNER_ROLE) 
-        nonReentrant 
+    function burnFrom(address from, uint256 amount)
+        external
+        onlyRole(BURNER_ROLE)
+        nonReentrant
     {
         require(from != address(0), "Cannot burn from zero address");
         require(amount > 0, "Burn amount must be greater than zero");
         require(balanceOf(from) >= amount, "Insufficient balance to burn");
-        
+
         _burn(from, amount);
     }
 
     /**
-     * @dev Adds/removes address from blacklist
+     * @notice Adds/removes address from blacklist
      * @param account Address to update
      * @param blacklisted Whether to blacklist the address
      */
-    function setBlacklisted(address account, bool blacklisted) 
-        external 
-        onlyRole(BLACKLISTER_ROLE) 
+    function setBlacklisted(address account, bool blacklisted)
+        external
+        onlyRole(BLACKLISTER_ROLE)
     {
         require(account != address(0), "Cannot blacklist zero address");
         _blacklisted[account] = blacklisted;
@@ -318,13 +367,13 @@ contract USDXToken is
     }
 
     /**
-     * @dev Updates KYC verification status
+     * @notice Updates KYC verification status
      * @param account Address to update
      * @param verified Whether the address is KYC verified
      */
-    function setKYCVerified(address account, bool verified) 
-        external 
-        onlyRole(COMPLIANCE_ROLE) 
+    function setKYCVerified(address account, bool verified)
+        external
+        onlyRole(COMPLIANCE_ROLE)
     {
         require(account != address(0), "Cannot set KYC for zero address");
         _kycVerified[account] = verified;
@@ -332,13 +381,13 @@ contract USDXToken is
     }
 
     /**
-     * @dev Sets daily transfer limit for address
+     * @notice Sets daily transfer limit for address
      * @param account Address to set limit for
      * @param limit Daily transfer limit
      */
-    function setDailyTransferLimit(address account, uint256 limit) 
-        external 
-        onlyRole(COMPLIANCE_ROLE) 
+    function setDailyTransferLimit(address account, uint256 limit)
+        external
+        onlyRole(COMPLIANCE_ROLE)
     {
         require(account != address(0), "Cannot set limit for zero address");
         _dailyTransferLimit[account] = limit;
@@ -346,13 +395,13 @@ contract USDXToken is
     }
 
     /**
-     * @dev Updates sanction status
+     * @notice Updates sanction status
      * @param account Address to update
      * @param sanctioned Whether the address is sanctioned
      */
-    function setSanctioned(address account, bool sanctioned) 
-        external 
-        onlyRole(COMPLIANCE_ROLE) 
+    function setSanctioned(address account, bool sanctioned)
+        external
+        onlyRole(COMPLIANCE_ROLE)
     {
         require(account != address(0), "Cannot sanction zero address");
         _sanctioned[account] = sanctioned;
@@ -360,21 +409,21 @@ contract USDXToken is
     }
 
     /**
-     * @dev Pauses all token transfers
+     * @notice Pauses all token transfers
      */
     function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
     /**
-     * @dev Unpauses all token transfers
+     * @notice Unpauses all token transfers
      */
     function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
     /**
-     * @dev Checks if daily transfer limit is exceeded
+     * @notice Checks if daily transfer limit is exceeded
      * @param from Sender address
      * @param amount Transfer amount
      * @return True if limit exceeded
@@ -393,7 +442,7 @@ contract USDXToken is
     }
 
     /**
-     * @dev Checks if region restriction applies
+     * @notice Checks if region restriction applies
      * @param from Sender address
      * @param to Recipient address
      * @return True if restricted
@@ -405,7 +454,7 @@ contract USDXToken is
     }
 
     /**
-     * @dev Updates daily transfer tracking
+     * @notice Updates daily transfer tracking
      * @param from Sender address
      * @param amount Transfer amount
      */
@@ -424,7 +473,7 @@ contract USDXToken is
     }
 
     /**
-     * @dev Updates holder count when balance changes
+     * @notice Updates holder count when balance changes
      * @param from Sender address
      * @param to Recipient address
      * @param amount Transfer amount
@@ -442,60 +491,115 @@ contract USDXToken is
     }
 
     /**
-     * @dev Authorize contract upgrades
+     * @notice Authorize contract upgrades
+     * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(address newImplementation) 
-        internal 
-        override 
-        onlyRole(UPGRADER_ROLE) 
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyRole(UPGRADER_ROLE)
     {}
 
     // View functions for getting restriction states
+
+    /**
+     * @notice Checks if an address is blacklisted
+     * @param account Address to check
+     * @return True if the address is blacklisted
+     */
     function isBlacklisted(address account) external view returns (bool) {
         return _blacklisted[account];
     }
 
+    /**
+     * @notice Checks if an address is KYC verified
+     * @param account Address to check
+     * @return True if the address is KYC verified
+     */
     function isKYCVerified(address account) external view returns (bool) {
         return _kycVerified[account];
     }
 
+    /**
+     * @notice Checks if an address is sanctioned
+     * @param account Address to check
+     * @return True if the address is sanctioned
+     */
     function isSanctioned(address account) external view returns (bool) {
         return _sanctioned[account];
     }
 
+    /**
+     * @notice Gets the daily transfer limit for an address
+     * @param account Address to check
+     * @return The daily transfer limit for the address
+     */
     function getDailyTransferLimit(address account) external view returns (uint256) {
         return _dailyTransferLimit[account];
     }
 
+    /**
+     * @notice Gets the daily transfer amount for an address
+     * @param account Address to check
+     * @return The daily transfer amount for the address
+     */
     function getDailyTransferAmount(address account) external view returns (uint256) {
         return _dailyTransferAmount[account];
     }
 
+    /**
+     * @notice Gets the maximum transfer amount allowed
+     * @return The maximum transfer amount
+     */
     function getMaxTransferAmount() external view returns (uint256) {
         return _maxTransferAmount;
     }
 
+    /**
+     * @notice Gets the minimum transfer amount required
+     * @return The minimum transfer amount
+     */
     function getMinTransferAmount() external view returns (uint256) {
         return _minTransferAmount;
     }
 
+    /**
+     * @notice Gets the maximum number of token holders allowed
+     * @return The maximum holder count
+     */
     function getMaxHolderCount() external view returns (uint256) {
         return _maxHolderCount;
     }
 
+    /**
+     * @notice Gets the current number of token holders
+     * @return The current holder count
+     */
     function getCurrentHolderCount() external view returns (uint256) {
         return _currentHolderCount;
     }
 
+    /**
+     * @notice Checks if KYC verification is required for transfers
+     * @return True if KYC is required
+     */
     function isKYCRequired() external view returns (bool) {
         return _kycRequired;
     }
 
+    /**
+     * @notice Checks if whitelist is enabled
+     * @return True if whitelist is enabled
+     */
     function isWhitelistEnabled() external view returns (bool) {
         return _whitelistEnabled;
     }
 
+    /**
+     * @notice Checks if region restrictions are enabled
+     * @return True if region restrictions are enabled
+     */
     function isRegionRestrictionsEnabled() external view returns (bool) {
         return _regionRestrictionsEnabled;
     }
-} 
+}

@@ -111,6 +111,8 @@
     "@typechain/hardhat": "^8.0.3",
     "@types/chai": "^4.3.6",
     "@types/mocha": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/parser": "^8.36.0",
     "chai": "^4.3.8",
     "dotenv": "^16.3.1",
     "eslint": "^8.50.0",

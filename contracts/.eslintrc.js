@@ -5,28 +5,30 @@ module.exports = {
     mocha: true,
     node: true,
   },
-  plugins: ["@typescript-eslint", "prettier"],
-  extends: [
-    "standard",
-    "plugin:prettier/recommended",
-    "plugin:node/recommended",
-  ],
-  parser: "@typescript-eslint/parser",
+  plugins: ["prettier"],
+  extends: ["eslint:recommended", "plugin:prettier/recommended"],
   parserOptions: {
-    ecmaVersion: 12,
+    ecmaVersion: 2021,
     sourceType: "module",
   },
+  globals: {
+    ethers: "readonly",
+    hre: "readonly",
+    upgrades: "readonly",
+    artifacts: "readonly",
+    contract: "readonly",
+    web3: "readonly",
+  },
   rules: {
-    "node/no-unsupported-features/es-syntax": [
-      "error",
-      { ignores: ["modules"] },
-    ],
-    "node/no-missing-import": "off",
-    "node/no-unpublished-import": "off",
-    "node/no-missing-require": "off",
     "prettier/prettier": "error",
-    "no-console": "warn",
-    "no-unused-vars": "error",
+    "no-console": "off", // 允许在scripts中使用console
+    "no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+      },
+    ],
     "prefer-const": "error",
     "no-var": "error",
     "object-shorthand": "error",
@@ -36,23 +38,35 @@ module.exports = {
     "arrow-spacing": "error",
     "comma-dangle": ["error", "always-multiline"],
     "eol-last": "error",
-    "indent": ["error", 2],
+    indent: ["error", 2, { SwitchCase: 1 }],
     "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "double"],
-    "semi": ["error", "always"],
+    quotes: ["error", "double"],
+    semi: ["error", "always"],
+    "no-process-exit": "off", // 允许在scripts中使用process.exit
   },
   overrides: [
     {
-      files: ["*.ts", "*.tsx"],
+      files: ["test/**/*.js"],
+      env: {
+        mocha: true,
+      },
       rules: {
-        "no-undef": "off",
+        "no-unused-expressions": "off",
+        "no-console": "off",
       },
     },
     {
-      files: ["test/**/*.js"],
+      files: ["scripts/**/*.js"],
       rules: {
-        "no-unused-expressions": "off",
+        "no-console": "off",
+        "no-process-exit": "off",
+      },
+    },
+    {
+      files: ["hardhat.config.js", "local-config.js"],
+      rules: {
+        "no-console": "off",
       },
     },
   ],
-}; 
+};

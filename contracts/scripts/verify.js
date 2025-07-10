@@ -1,7 +1,7 @@
-const { ethers } = require("hardhat");
+const { ethers: _ethers } = require("hardhat");
 const hre = require("hardhat");
 const fs = require("fs");
-const path = require("path");
+const _path = require("path");
 
 async function main() {
   const networkName = hre.network.name;
@@ -22,7 +22,7 @@ async function main() {
   console.log(`Using deployment file: ${deploymentFile}`);
 
   const deploymentData = JSON.parse(fs.readFileSync(deploymentFile, "utf8"));
-  const { contracts, configuration } = deploymentData;
+  const { contracts, configuration: _configuration } = deploymentData;
 
   // Verify USDT Token Contract
   try {

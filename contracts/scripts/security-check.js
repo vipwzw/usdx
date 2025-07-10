@@ -1,6 +1,6 @@
 const { ethers } = require("hardhat");
 const fs = require("fs");
-const path = require("path");
+const _path = require("path");
 
 /**
  * Security Check Tool for USDT Stablecoin Contracts

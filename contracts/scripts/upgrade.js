@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require("hardhat");
 const fs = require("fs");
-const path = require("path");
+const _path = require("path");
 
 /**
  * USDT Stablecoin Contract Upgrade Tool
@@ -108,15 +108,18 @@ class ContractUpgrader {
 
     // Create upgrade proposal
     const governance = await ethers.getContractAt("USDTGovernance", this.governanceAddress);
-    const upgradeData =
-      this.contractType === "token"
-        ? (await ethers.getContractAt("USDTToken", this.proxyAddress)).interface.encodeFunctionData(
-          "upgradeTo",
-          [newImplementation.address],
-        )
-        : (
-          await ethers.getContractAt("USDTGovernance", this.proxyAddress)
-        ).interface.encodeFunctionData("upgradeTo", [newImplementation.address]);
+    let upgradeData;
+    if (this.contractType === "token") {
+      const tokenContract = await ethers.getContractAt("USDTToken", this.proxyAddress);
+      upgradeData = tokenContract.interface.encodeFunctionData("upgradeTo", [
+        newImplementation.address,
+      ]);
+    } else {
+      const governanceContract = await ethers.getContractAt("USDTGovernance", this.proxyAddress);
+      upgradeData = governanceContract.interface.encodeFunctionData("upgradeTo", [
+        newImplementation.address,
+      ]);
+    }
 
     const description = `Upgrade ${this.contractType} contract to ${newImplementation.address}`;
 
@@ -220,7 +223,7 @@ async function prepareUpgradeProposal(
 ) {
   console.log("📋 Preparing upgrade proposal...");
 
-  const governance = await ethers.getContractAt("USDTGovernance", governanceAddress);
+  const _governance = await ethers.getContractAt("USDTGovernance", governanceAddress);
 
   let upgradeData;
   if (contractType === "token") {

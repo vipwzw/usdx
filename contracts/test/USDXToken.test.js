@@ -6,11 +6,11 @@ describe("USDXToken", () => {
   let owner;
   let addr1;
   let addr2;
-  let addr3;
-  let addrs;
+  let _addr3;
+  let _addrs;
 
   beforeEach(async () => {
-    [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, _addr3, ..._addrs] = await ethers.getSigners();
 
     const USDXToken = await ethers.getContractFactory("USDXToken");
     usdxToken = await upgrades.deployProxy(

@@ -1,6 +1,6 @@
 const { ethers } = require("hardhat");
 const fs = require("fs");
-const path = require("path");
+const _path = require("path");
 
 /**
  * USDT Stablecoin Monitoring System
@@ -126,7 +126,7 @@ class ContractMonitor {
       this.governance.queryFilter("ProposalCancelled", fromBlock, toBlock),
     ]);
 
-    const [proposalEvents, voteEvents, executionEvents, cancelEvents] = events;
+    const [proposalEvents, voteEvents, executionEvents, _cancelEvents] = events;
 
     // Process proposals
     for (const event of proposalEvents) {
@@ -214,7 +214,7 @@ class ContractMonitor {
       this.token.queryFilter("Whitelisted", fromBlock, toBlock),
     ]);
 
-    const [blacklistEvents, kycEvents, sanctionEvents, whitelistEvents] = events;
+    const [blacklistEvents, kycEvents, sanctionEvents, _whitelistEvents] = events;
 
     // Process blacklist updates
     for (const event of blacklistEvents) {

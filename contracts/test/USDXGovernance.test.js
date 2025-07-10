@@ -9,11 +9,11 @@ describe("USDXGovernance", () => {
   let governor2;
   let governor3;
   let addr1;
-  let addr2;
-  let addrs;
+  let _addr2;
+  let _addrs;
 
   beforeEach(async () => {
-    [owner, governor1, governor2, governor3, addr1, addr2, ...addrs] = await ethers.getSigners();
+    [owner, governor1, governor2, governor3, addr1, _addr2, ..._addrs] = await ethers.getSigners();
 
     // Deploy USDX token
     const USDXToken = await ethers.getContractFactory("USDXToken");
@@ -442,16 +442,16 @@ describe("USDXGovernance", () => {
       proposalId = 0;
     });
 
-    it('Should return "Active" during voting period', async () => {
+    it("Should return 'Active' during voting period", async () => {
       expect(await governance.getProposalState(proposalId)).to.equal("Active");
     });
 
-    it('Should return "Cancelled" for cancelled proposals', async () => {
+    it("Should return 'Cancelled' for cancelled proposals", async () => {
       await governance.connect(governor1).cancel(proposalId);
       expect(await governance.getProposalState(proposalId)).to.equal("Cancelled");
     });
 
-    it('Should return "Executed" for executed proposals', async () => {
+    it("Should return 'Executed' for executed proposals", async () => {
       await governance.connect(governor1).castVote(proposalId, true);
       await governance.connect(governor2).castVote(proposalId, true);
 
@@ -462,7 +462,7 @@ describe("USDXGovernance", () => {
       expect(await governance.getProposalState(proposalId)).to.equal("Executed");
     });
 
-    it('Should return "Failed" for proposals with insufficient votes', async () => {
+    it("Should return 'Failed' for proposals with insufficient votes", async () => {
       await governance.connect(governor1).castVote(proposalId, true);
 
       await ethers.provider.send("evm_increaseTime", [86401]);
@@ -471,7 +471,7 @@ describe("USDXGovernance", () => {
       expect(await governance.getProposalState(proposalId)).to.equal("Failed");
     });
 
-    it('Should return "Failed" for proposals with more against votes', async () => {
+    it("Should return 'Failed' for proposals with more against votes", async () => {
       await governance.connect(governor1).castVote(proposalId, false);
       await governance.connect(governor2).castVote(proposalId, false);
       await governance.connect(governor3).castVote(proposalId, true);
@@ -482,7 +482,7 @@ describe("USDXGovernance", () => {
       expect(await governance.getProposalState(proposalId)).to.equal("Failed");
     });
 
-    it('Should return "Queued" for proposals in execution delay', async () => {
+    it("Should return 'Queued' for proposals in execution delay", async () => {
       await governance.connect(governor1).castVote(proposalId, true);
       await governance.connect(governor2).castVote(proposalId, true);
 
