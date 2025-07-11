@@ -99,6 +99,7 @@ contract USDXToken is
     mapping(address => uint256) private _dailyTransferAmount;
     mapping(address => uint256) private _lastTransferDay;
     mapping(address => uint256) private _regionCode;
+    mapping(uint256 => bool) private _allowedRegions;
 
     // Additional restriction state variables
     mapping(address => bool) private _transferLocked;
@@ -626,9 +627,20 @@ contract USDXToken is
      * @return True if restricted
      */
     function _isRegionRestricted(address from, address to) internal view returns (bool) {
-        // Implementation depends on specific regional requirements
-        // For demo, we'll check if addresses have restricted region codes
-        return _regionCode[from] == 999 || _regionCode[to] == 999;
+        // Both from and to must be in the allowed region list
+        if (!_allowedRegions[_regionCode[from]] || !_allowedRegions[_regionCode[to]]) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @notice Sets allowed region status
+     * @param regionCode The region code to allow or disallow
+     * @param allowed Whether the region is allowed
+     */
+    function setAllowedRegion(uint256 regionCode, bool allowed) external onlyRole(COMPLIANCE_ROLE) {
+        _allowedRegions[regionCode] = allowed;
     }
 
     /**
@@ -751,6 +763,40 @@ contract USDXToken is
      */
     function isSanctioned(address account) external view returns (bool) {
         return _sanctioned[account];
+    }
+
+    /**
+     * @notice Checks if an address is a valid recipient
+     * @param account Address to check
+     * @return True if the address is a valid recipient
+     */
+    function isValidRecipient(address account) external view returns (bool) {
+        return _validRecipients[account];
+    }
+
+    /**
+     * @notice Checks if recipient validation is required
+     * @return True if recipient validation is required
+     */
+    function isRecipientValidationRequired() external view returns (bool) {
+        return _recipientValidationRequired;
+    }
+
+    /**
+     * @notice Checks if an address is an authorized sender
+     * @param account Address to check
+     * @return True if the address is an authorized sender
+     */
+    function isAuthorizedSender(address account) external view returns (bool) {
+        return _authorizedSenders[account];
+    }
+
+    /**
+     * @notice Checks if transfer authorization is required
+     * @return True if transfer authorization is required
+     */
+    function isTransferAuthorizationRequired() external view returns (bool) {
+        return _transferAuthorizationRequired;
     }
 
     /**
