@@ -21,7 +21,18 @@ describe("Performance Tests", () => {
     async track(operationName, txPromise) {
       const startTime = Date.now();
       const tx = await txPromise;
-      const receipt = await tx.wait();
+      let receipt;
+
+      // 处理不同类型的交易对象
+      if (typeof tx.wait === "function") {
+        receipt = await tx.wait();
+      } else if (tx.hash) {
+        // 如果tx有hash但没有wait方法，手动获取receipt
+        receipt = await ethers.provider.waitForTransaction(tx.hash);
+      } else {
+        throw new Error(`Invalid transaction object: ${JSON.stringify(tx)}`);
+      }
+
       const endTime = Date.now();
 
       const gasUsed = receipt.gasUsed;
@@ -34,7 +45,7 @@ describe("Performance Tests", () => {
         gasPrice: gasPrice.toString(),
         gasCost: gasCost.toString(),
         duration: endTime - startTime,
-        blockNumber: receipt.blockNumber,
+        blockNumber: Number(receipt.blockNumber),
       };
 
       this.operations.push(operation);

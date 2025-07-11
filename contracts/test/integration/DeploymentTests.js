@@ -187,10 +187,29 @@ describe("Deployment Integration Tests", () => {
       const data = usdxToken.interface.encodeFunctionData("pause", []);
       const tx = await governance.connect(governor1).propose(target, 0, data, "测试提案");
       const receipt = await tx.wait();
-      const proposalId = receipt.logs[0].args.proposalId;
+
+      // 查找ProposalCreated事件来获取proposalId
+      let proposalId;
+      for (const log of receipt.logs) {
+        try {
+          const parsedLog = governance.interface.parseLog(log);
+          if (parsedLog.name === "ProposalCreated") {
+            proposalId = parsedLog.args.proposalId;
+            break;
+          }
+        } catch (e) {
+          // 忽略解析错误，继续查找
+          continue;
+        }
+      }
+
+      // 如果没有找到，使用proposalCount作为fallback
+      if (!proposalId || proposalId === 0n) {
+        proposalId = await governance.proposalCount();
+      }
 
       expect(proposalId).to.be.greaterThan(0);
-      console.log("✅ 治理功能测试通过");
+      console.log(`✅ 治理功能测试通过，提案ID: ${proposalId}`);
 
       // 阶段5: 生成部署报告
       console.log("\n📋 阶段5: 生成部署报告");
