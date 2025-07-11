@@ -50,19 +50,19 @@ contract USDXGovernance is
     /// @notice Role identifier for governance participants
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
-    // Proposal structure
+    // Proposal structure - optimized for gas efficiency
     struct Proposal {
         uint256 id;
         address proposer;
         address target;
         uint256 value;
-        bytes data;
-        string description;
         uint256 votingDeadline;
-        bool executed;
-        bool cancelled;
         uint256 forVotes;
         uint256 againstVotes;
+        bytes data;
+        string description;
+        bool executed;
+        bool cancelled;
         mapping(address => bool) hasVoted;
         mapping(address => bool) voteChoice;
     }
@@ -450,7 +450,10 @@ contract USDXGovernance is
      */
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Only DEFAULT_ADMIN_ROLE can upgrade - implementation address validation handled by OpenZeppelin
+        // solhint-disable-next-line no-empty-blocks
+    }
 
     /**
      * @notice Gets proposal details

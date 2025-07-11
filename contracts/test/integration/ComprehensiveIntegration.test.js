@@ -1,12 +1,12 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("Comprehensive Integration Tests", function () {
+describe("Comprehensive Integration Tests", () => {
   let token, governance;
   let deployer, compliance, blacklister, minter, pauser, upgrader;
   let user1, user2, user3, user4, user5;
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     [
       deployer,
       compliance,
@@ -53,8 +53,8 @@ describe("Comprehensive Integration Tests", function () {
     await token.grantRole(UPGRADER_ROLE, upgrader.address);
   });
 
-  describe("Multi-Restriction Interaction Tests", function () {
-    it("应该正确处理多重限制的优先级", async function () {
+  describe("Multi-Restriction Interaction Tests", () => {
+    it("应该正确处理多重限制的优先级", async () => {
       // 设置复杂的限制环境
       await token.connect(compliance).setKYCVerified(user1.address, true);
       await token.connect(compliance).setKYCVerified(user2.address, true);
@@ -96,7 +96,7 @@ describe("Comprehensive Integration Tests", function () {
       expect(restrictionCode).to.equal(15); // REGION_RESTRICTION
     });
 
-    it("应该正确处理合规违规的复杂场景", async function () {
+    it("应该正确处理合规违规的复杂场景", async () => {
       // 设置复杂的合规违规场景
       await token.connect(compliance).setKYCVerified(user1.address, true);
       await token.connect(minter).mint(user1.address, ethers.parseUnits("1000000", 6));
@@ -132,8 +132,8 @@ describe("Comprehensive Integration Tests", function () {
     });
   });
 
-  describe("Full Lifecycle Integration Tests", function () {
-    it("应该完成完整的用户生命周期", async function () {
+  describe("Full Lifecycle Integration Tests", () => {
+    it("应该完成完整的用户生命周期", async () => {
       console.log("\n🔄 完整用户生命周期测试");
 
       // 阶段1: 用户注册和KYC
@@ -192,7 +192,7 @@ describe("Comprehensive Integration Tests", function () {
       await token.connect(user1).transfer(user2.address, ethers.parseUnits("1000", 6));
     });
 
-    it("应该正确处理企业级批量操作", async function () {
+    it("应该正确处理企业级批量操作", async () => {
       console.log("\n🏢 企业级批量操作测试");
 
       const userCount = 20;
@@ -257,8 +257,8 @@ describe("Comprehensive Integration Tests", function () {
     });
   });
 
-  describe("Governance Integration Tests", function () {
-    it("应该通过治理正确执行合规决策", async function () {
+  describe("Governance Integration Tests", () => {
+    it("应该通过治理正确执行合规决策", async () => {
       console.log("\n🗳️ 治理合规决策集成测试");
 
       // 准备测试环境
@@ -304,7 +304,7 @@ describe("Comprehensive Integration Tests", function () {
       console.log("✅ 治理决策成功执行，用户制裁状态已解除");
     });
 
-    it("应该正确处理紧急暂停和恢复流程", async function () {
+    it("应该正确处理紧急暂停和恢复流程", async () => {
       console.log("\n🚨 紧急暂停和恢复流程测试");
 
       // 准备正常用户
@@ -355,8 +355,8 @@ describe("Comprehensive Integration Tests", function () {
     });
   });
 
-  describe("Cross-Feature Integration Tests", function () {
-    it("应该正确处理复杂的跨功能交互", async function () {
+  describe("Cross-Feature Integration Tests", () => {
+    it("应该正确处理复杂的跨功能交互", async () => {
       console.log("\n🔗 复杂跨功能交互测试");
 
       // 设置复杂环境

@@ -1,13 +1,13 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("Advanced Real-World Scenarios", function () {
-  let token, governance;
+describe("Advanced Real-World Scenarios", () => {
+  let token, _governance;
   let deployer, compliance, blacklister, minter, pauser;
-  let bank1, bank2, bank3, regulator, auditor;
+  let bank1, bank2, bank3, regulator, _auditor;
   let customer1, customer2, customer3;
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     [
       deployer,
       compliance,
@@ -18,7 +18,7 @@ describe("Advanced Real-World Scenarios", function () {
       bank2,
       bank3,
       regulator,
-      auditor,
+      _auditor,
       customer1,
       customer2,
       customer3,
@@ -34,7 +34,7 @@ describe("Advanced Real-World Scenarios", function () {
     ]);
 
     const USDXGovernance = await ethers.getContractFactory("USDXGovernance");
-    governance = await upgrades.deployProxy(USDXGovernance, [
+    _governance = await upgrades.deployProxy(USDXGovernance, [
       token.target,
       [deployer.address, regulator.address],
       2,
@@ -54,8 +54,8 @@ describe("Advanced Real-World Scenarios", function () {
     await token.grantRole(PAUSER_ROLE, pauser.address);
   });
 
-  describe("高级银行业务场景", function () {
-    it("应该处理多银行联盟清算场景", async function () {
+  describe("高级银行业务场景", () => {
+    it("应该处理多银行联盟清算场景", async () => {
       console.log("\n🏦 === 多银行联盟清算场景 ===");
 
       // 初始化银行联盟
@@ -121,7 +121,7 @@ describe("Advanced Real-World Scenarios", function () {
       console.log("✅ 银行联盟清算完成，资金守恒验证通过");
     });
 
-    it("应该处理央行数字货币发行场景", async function () {
+    it("应该处理央行数字货币发行场景", async () => {
       console.log("\n🏛️ === 央行数字货币发行场景 ===");
 
       // 央行角色由deployer扮演
@@ -181,8 +181,8 @@ describe("Advanced Real-World Scenarios", function () {
     });
   });
 
-  describe("监管合规高级场景", function () {
-    it("应该处理跨境资金监管场景", async function () {
+  describe("监管合规高级场景", () => {
+    it("应该处理跨境资金监管场景", async () => {
       console.log("\n🌍 === 跨境资金监管场景 ===");
 
       // 设置不同地区的机构
@@ -273,7 +273,7 @@ describe("Advanced Real-World Scenarios", function () {
       console.log("✅ 跨境资金监管场景完成，所有合规要求得到满足");
     });
 
-    it("应该处理反洗钱监控场景", async function () {
+    it("应该处理反洗钱监控场景", async () => {
       console.log("\n🕵️ === 反洗钱监控场景 ===");
 
       // 设置角色
@@ -367,8 +367,8 @@ describe("Advanced Real-World Scenarios", function () {
     });
   });
 
-  describe("危机应对场景", function () {
-    it("应该处理系统性金融风险场景", async function () {
+  describe("危机应对场景", () => {
+    it("应该处理系统性金融风险场景", async () => {
       console.log("\n💥 === 系统性金融风险应对场景 ===");
 
       // 模拟金融系统参与者
@@ -377,7 +377,7 @@ describe("Advanced Real-World Scenarios", function () {
       const shadowBank = bank3;
       const retailInvestor1 = customer1;
       const retailInvestor2 = customer2;
-      const riskManager = regulator;
+      const _riskManager = regulator;
 
       console.log("🏦 阶段1: 系统性银行设置");
       const systemicBanks = [systemicBank1, systemicBank2];

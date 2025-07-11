@@ -8,7 +8,7 @@ async function main() {
   console.log("🔍 UNAUTHORIZED_TRANSFER 管理示例\n");
 
   // 获取合约实例
-  const [deployer, complianceOfficer, user1, user2, authorizedSender, unauthorizedSender] =
+  const [_deployer, complianceOfficer, user1, user2, authorizedSender, unauthorizedSender] =
     await ethers.getSigners();
   const USDXToken = await ethers.getContractFactory("USDXToken");
   const token = await USDXToken.attach("YOUR_TOKEN_ADDRESS"); // 替换为实际地址
@@ -111,7 +111,7 @@ async function main() {
 /**
  * 检查转账是否会触发 UNAUTHORIZED_TRANSFER
  */
-async function checkTransferRestriction(token, from, to, amount) {
+async function _checkTransferRestriction(token, from, to, amount) {
   const code = await token.detectTransferRestriction(from, to, amount);
   const message = await token.messageForTransferRestriction(code);
 
@@ -126,7 +126,7 @@ async function checkTransferRestriction(token, from, to, amount) {
 /**
  * 演示不同场景下的转账授权检查
  */
-async function demonstrateAuthorizationScenarios(token, complianceOfficer) {
+async function _demonstrateAuthorizationScenarios(token, complianceOfficer) {
   console.log("\n🎭 转账授权场景演示:");
 
   const scenarios = [

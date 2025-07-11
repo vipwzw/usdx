@@ -1,13 +1,13 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
+describe("UNAUTHORIZED_TRANSFER 限制测试", () => {
   let token;
   let deployer, complianceOfficer, user1, authorizedSender, unauthorizedSender;
   const UNAUTHORIZED_TRANSFER = 10;
   const SUCCESS = 0;
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     [deployer, complianceOfficer, user1, authorizedSender, unauthorizedSender] =
       await ethers.getSigners();
 
@@ -33,8 +33,8 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
     await token.mint(unauthorizedSender.address, ethers.parseUnits("10000", 6));
   });
 
-  describe("转账授权功能测试", function () {
-    it("默认情况下，转账授权验证应该是禁用的", async function () {
+  describe("转账授权功能测试", () => {
+    it("默认情况下，转账授权验证应该是禁用的", async () => {
       expect(await token.isTransferAuthorizationRequired()).to.be.false;
 
       // 默认情况下应该可以从任何地址转账
@@ -47,66 +47,66 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(SUCCESS);
     });
 
-    it("应该能够启用转账授权验证功能", async function () {
+    it("应该能够启用转账授权验证功能", async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
       expect(await token.isTransferAuthorizationRequired()).to.be.true;
     });
 
-    it("应该能够禁用转账授权验证功能", async function () {
+    it("应该能够禁用转账授权验证功能", async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(false);
       expect(await token.isTransferAuthorizationRequired()).to.be.false;
     });
 
-    it("只有 COMPLIANCE_ROLE 可以设置转账授权要求", async function () {
+    it("只有 COMPLIANCE_ROLE 可以设置转账授权要求", async () => {
       await expect(token.connect(user1).setTransferAuthorizationRequired(true)).to.be.reverted;
     });
   });
 
-  describe("授权发送方管理测试", function () {
-    beforeEach(async function () {
+  describe("授权发送方管理测试", () => {
+    beforeEach(async () => {
       // 启用转账授权验证
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
     });
 
-    it("应该能够设置授权发送方", async function () {
+    it("应该能够设置授权发送方", async () => {
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, true);
       expect(await token.isAuthorizedSender(authorizedSender.address)).to.be.true;
     });
 
-    it("应该能够移除授权发送方", async function () {
+    it("应该能够移除授权发送方", async () => {
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, true);
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, false);
       expect(await token.isAuthorizedSender(authorizedSender.address)).to.be.false;
     });
 
-    it("不能设置零地址为授权发送方", async function () {
+    it("不能设置零地址为授权发送方", async () => {
       await expect(
         token.connect(complianceOfficer).setAuthorizedSender(ethers.ZeroAddress, true),
       ).to.be.revertedWithCustomError(token, "CannotSetLimitForZeroAddress");
     });
 
-    it("只有 COMPLIANCE_ROLE 可以设置授权发送方", async function () {
+    it("只有 COMPLIANCE_ROLE 可以设置授权发送方", async () => {
       await expect(token.connect(user1).setAuthorizedSender(authorizedSender.address, true)).to.be
         .reverted;
     });
 
-    it("默认情况下地址不是授权发送方", async function () {
+    it("默认情况下地址不是授权发送方", async () => {
       expect(await token.isAuthorizedSender(unauthorizedSender.address)).to.be.false;
     });
   });
 
-  describe("UNAUTHORIZED_TRANSFER 限制逻辑测试", function () {
+  describe("UNAUTHORIZED_TRANSFER 限制逻辑测试", () => {
     const transferAmount = ethers.parseUnits("100", 6);
 
-    beforeEach(async function () {
+    beforeEach(async () => {
       // 启用转账授权验证
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
       // 设置一个授权发送方
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, true);
     });
 
-    it("授权发送方转账应该成功", async function () {
+    it("授权发送方转账应该成功", async () => {
       const restrictionCode = await token.detectTransferRestriction(
         authorizedSender.address,
         user1.address,
@@ -115,7 +115,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(SUCCESS);
     });
 
-    it("未授权发送方转账应该返回 UNAUTHORIZED_TRANSFER", async function () {
+    it("未授权发送方转账应该返回 UNAUTHORIZED_TRANSFER", async () => {
       const restrictionCode = await token.detectTransferRestriction(
         unauthorizedSender.address,
         user1.address,
@@ -124,23 +124,23 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(UNAUTHORIZED_TRANSFER);
     });
 
-    it("未授权发送方转账应该返回正确的错误消息", async function () {
+    it("未授权发送方转账应该返回正确的错误消息", async () => {
       const message = await token.messageForTransferRestriction(UNAUTHORIZED_TRANSFER);
       expect(message).to.equal("Transfer unauthorized");
     });
 
-    it("实际转账应该被阻止并显示正确的错误", async function () {
+    it("实际转账应该被阻止并显示正确的错误", async () => {
       await expect(token.connect(unauthorizedSender).transfer(user1.address, transferAmount))
         .to.be.revertedWithCustomError(token, "TransferRestricted")
         .withArgs(UNAUTHORIZED_TRANSFER, "Transfer unauthorized");
     });
 
-    it("mint 操作不受转账授权限制", async function () {
+    it("mint 操作不受转账授权限制", async () => {
       // mint 操作应该始终成功，不受 UNAUTHORIZED_TRANSFER 限制
       await expect(token.mint(unauthorizedSender.address, transferAmount)).to.not.be.reverted;
     });
 
-    it("零地址(burn)不受转账授权限制", async function () {
+    it("零地址(burn)不受转账授权限制", async () => {
       // burn 操作的 from 地址检查会跳过授权验证
       // 这里测试从零地址转账的场景
       const restrictionCode = await token.detectTransferRestriction(
@@ -152,15 +152,15 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
     });
   });
 
-  describe("与其他限制的交互测试", function () {
+  describe("与其他限制的交互测试", () => {
     const transferAmount = ethers.parseUnits("100", 6);
 
-    beforeEach(async function () {
+    beforeEach(async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, true);
     });
 
-    it("UNAUTHORIZED_TRANSFER 优先级应该低于黑名单检查", async function () {
+    it("UNAUTHORIZED_TRANSFER 优先级应该低于黑名单检查", async () => {
       // 将授权发送方加入黑名单
       await token.setBlacklisted(authorizedSender.address, true);
 
@@ -174,7 +174,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(2); // BLACKLISTED_SENDER
     });
 
-    it("UNAUTHORIZED_TRANSFER 优先级应该低于制裁检查", async function () {
+    it("UNAUTHORIZED_TRANSFER 优先级应该低于制裁检查", async () => {
       // 将授权发送方加入制裁名单
       await token.setSanctioned(authorizedSender.address, true);
 
@@ -188,7 +188,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(9); // SANCTIONED_ADDRESS
     });
 
-    it("UNAUTHORIZED_TRANSFER 优先级应该低于KYC检查", async function () {
+    it("UNAUTHORIZED_TRANSFER 优先级应该低于KYC检查", async () => {
       // 移除发送方的KYC验证
       await token.connect(complianceOfficer).setKYCVerified(unauthorizedSender.address, false);
 
@@ -202,7 +202,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(6); // INVALID_KYC_SENDER
     });
 
-    it("禁用转账授权验证后，所有地址都应该可以发送", async function () {
+    it("禁用转账授权验证后，所有地址都应该可以发送", async () => {
       // 首先确认未授权发送方会被阻止
       let restrictionCode = await token.detectTransferRestriction(
         unauthorizedSender.address,
@@ -224,10 +224,10 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
     });
   });
 
-  describe("边界情况测试", function () {
+  describe("边界情况测试", () => {
     const transferAmount = ethers.parseUnits("100", 6);
 
-    it("当转账授权验证未启用时，设置授权发送方应该无效果", async function () {
+    it("当转账授权验证未启用时，设置授权发送方应该无效果", async () => {
       // 转账授权验证未启用
       expect(await token.isTransferAuthorizationRequired()).to.be.false;
 
@@ -243,7 +243,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(SUCCESS);
     });
 
-    it("大量设置授权发送方应该正常工作", async function () {
+    it("大量设置授权发送方应该正常工作", async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
 
       // 创建多个测试地址
@@ -270,7 +270,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(SUCCESS);
     });
 
-    it("transferFrom 操作应该同样受到授权限制", async function () {
+    it("transferFrom 操作应该同样受到授权限制", async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
 
       // 给 user1 授权使用 unauthorizedSender 的代币
@@ -285,7 +285,7 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(restrictionCode).to.equal(UNAUTHORIZED_TRANSFER);
     });
 
-    it("从部分授权的地址转出大量代币", async function () {
+    it("从部分授权的地址转出大量代币", async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, true);
 
@@ -300,15 +300,15 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
     });
   });
 
-  describe("实际转账执行测试", function () {
+  describe("实际转账执行测试", () => {
     const transferAmount = ethers.parseUnits("100", 6);
 
-    beforeEach(async function () {
+    beforeEach(async () => {
       await token.connect(complianceOfficer).setTransferAuthorizationRequired(true);
       await token.connect(complianceOfficer).setAuthorizedSender(authorizedSender.address, true);
     });
 
-    it("授权发送方的实际转账应该成功", async function () {
+    it("授权发送方的实际转账应该成功", async () => {
       const initialBalance = await token.balanceOf(user1.address);
 
       await token.connect(authorizedSender).transfer(user1.address, transferAmount);
@@ -317,13 +317,13 @@ describe("UNAUTHORIZED_TRANSFER 限制测试", function () {
       expect(finalBalance - initialBalance).to.equal(transferAmount);
     });
 
-    it("未授权发送方的实际转账应该失败", async function () {
+    it("未授权发送方的实际转账应该失败", async () => {
       await expect(
         token.connect(unauthorizedSender).transfer(user1.address, transferAmount),
       ).to.be.revertedWithCustomError(token, "TransferRestricted");
     });
 
-    it("授权后再转账应该成功", async function () {
+    it("授权后再转账应该成功", async () => {
       // 首先确认转账会失败
       await expect(
         token.connect(unauthorizedSender).transfer(user1.address, transferAmount),

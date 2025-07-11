@@ -8,7 +8,7 @@ async function main() {
   console.log("🌍 Region Restrictions 管理示例\n");
 
   // 获取合约实例
-  const [deployer, complianceOfficer, user1, user2, usUser, ukUser, cnUser, restrictedUser] =
+  const [_deployer, complianceOfficer, user1, _user2, usUser, ukUser, cnUser, restrictedUser] =
     await ethers.getSigners();
   const USDXToken = await ethers.getContractFactory("USDXToken");
   const token = await USDXToken.attach("YOUR_TOKEN_ADDRESS"); // 替换为实际地址
@@ -177,7 +177,7 @@ async function main() {
 /**
  * 检查转账是否会触发 REGION_RESTRICTION
  */
-async function checkRegionRestriction(token, from, to, amount) {
+async function _checkRegionRestriction(token, from, to, amount) {
   const code = await token.detectTransferRestriction(from, to, amount);
   const message = await token.messageForTransferRestriction(code);
 
@@ -192,7 +192,7 @@ async function checkRegionRestriction(token, from, to, amount) {
 /**
  * 演示不同地区组合的转账测试
  */
-async function demonstrateRegionScenarios(token, complianceOfficer) {
+async function _demonstrateRegionScenarios(token, complianceOfficer) {
   console.log("\n🎭 地区限制场景演示:");
 
   const scenarios = [

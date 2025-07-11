@@ -8,7 +8,7 @@ async function main() {
   console.log("🔍 INVALID_RECIPIENT 管理示例\n");
 
   // 获取合约实例
-  const [deployer, complianceOfficer, user1, user2, validPartner, invalidUser] =
+  const [_deployer, complianceOfficer, user1, user2, validPartner, invalidUser] =
     await ethers.getSigners();
   const USDXToken = await ethers.getContractFactory("USDXToken");
   const token = await USDXToken.attach("YOUR_TOKEN_ADDRESS"); // 替换为实际地址
@@ -99,7 +99,7 @@ async function main() {
 /**
  * 检查转账是否会触发 INVALID_RECIPIENT
  */
-async function checkTransferRestriction(token, from, to, amount) {
+async function _checkTransferRestriction(token, from, to, amount) {
   const code = await token.detectTransferRestriction(from, to, amount);
   const message = await token.messageForTransferRestriction(code);
 

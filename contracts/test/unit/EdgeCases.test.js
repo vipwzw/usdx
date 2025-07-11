@@ -1,12 +1,12 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("Edge Cases and Error Handling", function () {
+describe("Edge Cases and Error Handling", () => {
   let token, governance;
-  let deployer, complianceOfficer, user1, user2, user3;
+  let deployer, complianceOfficer, user1, user2, _user3;
 
-  beforeEach(async function () {
-    [deployer, complianceOfficer, user1, user2, user3] = await ethers.getSigners();
+  beforeEach(async () => {
+    [deployer, complianceOfficer, user1, user2, _user3] = await ethers.getSigners();
 
     // Deploy USDXToken
     const USDXToken = await ethers.getContractFactory("USDXToken");
@@ -32,9 +32,9 @@ describe("Edge Cases and Error Handling", function () {
     await token.grantRole(COMPLIANCE_ROLE, complianceOfficer.address);
   });
 
-  describe("USDXToken Edge Cases", function () {
-    describe("Compliance Violation Edge Cases", function () {
-      it("应该检测大额转账到未KYC新账户的合规违规", async function () {
+  describe("USDXToken Edge Cases", () => {
+    describe("Compliance Violation Edge Cases", () => {
+      it("应该检测大额转账到未KYC新账户的合规违规", async () => {
         // 设置用户1为KYC验证用户并给予资金
         await token.setKYCVerified(user1.address, true);
         // 不设置user2的KYC验证，保持其为未验证状态
@@ -51,7 +51,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(restrictionCode).to.equal(7); // INVALID_KYC_RECEIVER（KYC检查优先级更高）
       });
 
-      it("应该检测超大额转账到已验证新账户的合规违规", async function () {
+      it("应该检测超大额转账到已验证新账户的合规违规", async () => {
         // 设置双方为KYC验证用户
         await token.setKYCVerified(user1.address, true);
         await token.setKYCVerified(user2.address, true);
@@ -68,7 +68,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(restrictionCode).to.equal(13); // COMPLIANCE_VIOLATION
       });
 
-      it("应该允许到非新账户的大额转账", async function () {
+      it("应该允许到非新账户的大额转账", async () => {
         // 设置双方为KYC验证用户
         await token.setKYCVerified(user1.address, true);
         await token.setKYCVerified(user2.address, true);
@@ -86,8 +86,8 @@ describe("Edge Cases and Error Handling", function () {
       });
     });
 
-    describe("Holder Count Update Edge Cases", function () {
-      it("应该正确更新新持有者计数", async function () {
+    describe("Holder Count Update Edge Cases", () => {
+      it("应该正确更新新持有者计数", async () => {
         await token.setKYCVerified(user1.address, true);
         await token.setKYCVerified(user2.address, true);
 
@@ -102,7 +102,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(await token.getCurrentHolderCount()).to.equal(initialCount + 2n);
       });
 
-      it("应该正确处理余额变为零的情况", async function () {
+      it("应该正确处理余额变为零的情况", async () => {
         await token.setKYCVerified(user1.address, true);
         await token.setKYCVerified(user2.address, true);
 
@@ -117,7 +117,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(await token.getCurrentHolderCount()).to.equal(countAfterMint);
       });
 
-      it("应该正确处理burn操作对持有者计数的影响", async function () {
+      it("应该正确处理burn操作对持有者计数的影响", async () => {
         await token.setKYCVerified(user1.address, true);
 
         await token.mint(user1.address, ethers.parseUnits("100", 6));
@@ -132,8 +132,8 @@ describe("Edge Cases and Error Handling", function () {
       });
     });
 
-    describe("Daily Transfer Limit Edge Cases", function () {
-      it("应该处理没有设置日限额的情况", async function () {
+    describe("Daily Transfer Limit Edge Cases", () => {
+      it("应该处理没有设置日限额的情况", async () => {
         await token.setKYCVerified(user1.address, true);
         await token.setKYCVerified(user2.address, true);
         await token.mint(user1.address, ethers.parseUnits("1000", 6));
@@ -143,7 +143,7 @@ describe("Edge Cases and Error Handling", function () {
           .not.be.reverted;
       });
 
-      it("应该正确处理跨日期的转账限额重置", async function () {
+      it("应该正确处理跨日期的转账限额重置", async () => {
         await token.setKYCVerified(user1.address, true);
         await token.setKYCVerified(user2.address, true);
         await token.mint(user1.address, ethers.parseUnits("1000", 6));
@@ -163,13 +163,13 @@ describe("Edge Cases and Error Handling", function () {
       });
     });
 
-    describe("Authorization and Upgrade", function () {
-      it("应该只允许UPGRADER_ROLE升级合约", async function () {
+    describe("Authorization and Upgrade", () => {
+      it("应该只允许UPGRADER_ROLE升级合约", async () => {
         const UPGRADER_ROLE = await token.UPGRADER_ROLE();
 
         // 部署新的实现合约
         const USDXTokenV2 = await ethers.getContractFactory("USDXToken");
-        const newImplementation = await USDXTokenV2.deploy();
+        const _newImplementation = await USDXTokenV2.deploy();
 
         // 非UPGRADER_ROLE用户不能升级
         await expect(
@@ -185,9 +185,9 @@ describe("Edge Cases and Error Handling", function () {
     });
   });
 
-  describe("USDXGovernance Edge Cases", function () {
-    describe("Proposal State Edge Cases", function () {
-      it("应该正确返回'Defeated'状态（反对票更多）", async function () {
+  describe("USDXGovernance Edge Cases", () => {
+    describe("Proposal State Edge Cases", () => {
+      it("应该正确返回'Defeated'状态（反对票更多）", async () => {
         // 添加更多治理者
         await governance.addGovernor(user1.address);
         await governance.addGovernor(user2.address);
@@ -215,7 +215,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(await governance.getProposalState(proposalId)).to.equal("Defeated");
       });
 
-      it("应该正确返回'Expired'状态", async function () {
+      it("应该正确返回'Expired'状态", async () => {
         const tx = await governance.propose(
           token.target,
           0,
@@ -235,7 +235,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(await governance.getProposalState(proposalId)).to.equal("Expired");
       });
 
-      it("应该正确返回'Queued'状态", async function () {
+      it("应该正确返回'Queued'状态", async () => {
         const tx = await governance.propose(
           token.target,
           0,
@@ -256,8 +256,8 @@ describe("Edge Cases and Error Handling", function () {
       });
     });
 
-    describe("Vote Tracking Edge Cases", function () {
-      it("应该正确跟踪投票选择", async function () {
+    describe("Vote Tracking Edge Cases", () => {
+      it("应该正确跟踪投票选择", async () => {
         const tx = await governance.propose(
           token.target,
           0,
@@ -282,7 +282,7 @@ describe("Edge Cases and Error Handling", function () {
         expect(await governance.getVoteChoice(proposalId, user1.address)).to.be.false;
       });
 
-      it("查询未投票者的投票选择应该失败", async function () {
+      it("查询未投票者的投票选择应该失败", async () => {
         const tx = await governance.propose(
           token.target,
           0,
@@ -296,8 +296,8 @@ describe("Edge Cases and Error Handling", function () {
       });
     });
 
-    describe("Governor Management Edge Cases", function () {
-      it("应该正确处理治理者列表", async function () {
+    describe("Governor Management Edge Cases", () => {
+      it("应该正确处理治理者列表", async () => {
         const initialGovernors = await governance.getGovernors();
         expect(initialGovernors.length).to.equal(1);
         expect(initialGovernors[0]).to.equal(deployer.address);
@@ -316,13 +316,13 @@ describe("Edge Cases and Error Handling", function () {
         expect(await governance.isGovernor(user1.address)).to.be.false;
       });
 
-      it("应该正确处理重复添加治理者的错误", async function () {
+      it("应该正确处理重复添加治理者的错误", async () => {
         await expect(governance.addGovernor(deployer.address)).to.be.reverted;
       });
     });
 
-    describe("Authorization Edge Cases", function () {
-      it("应该只允许ADMIN_ROLE升级合约", async function () {
+    describe("Authorization Edge Cases", () => {
+      it("应该只允许ADMIN_ROLE升级合约", async () => {
         const DEFAULT_ADMIN_ROLE = await governance.DEFAULT_ADMIN_ROLE();
         expect(await governance.hasRole(DEFAULT_ADMIN_ROLE, deployer.address)).to.be.true;
 
@@ -332,8 +332,8 @@ describe("Edge Cases and Error Handling", function () {
     });
   });
 
-  describe("Integration Edge Cases", function () {
-    it("应该正确处理复杂的合规检查组合", async function () {
+  describe("Integration Edge Cases", () => {
+    it("应该正确处理复杂的合规检查组合", async () => {
       // 设置复杂的合规环境
       await token.setKYCVerified(user1.address, true);
       await token.setKYCVerified(user2.address, true);
