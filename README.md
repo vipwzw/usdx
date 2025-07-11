@@ -128,6 +128,29 @@ scripts\setup-code-navigation.bat
 ### 📋 技术文档
 - **[分支保护配置](docs/BRANCH_PROTECTION_GUIDE.md)** - GitHub分支保护规则设置
 - **[GitHub Actions权限配置](docs/GITHUB_ACTIONS_PERMISSIONS.md)** - CI/CD权限配置指南
+- **[Gas报告生成器](docs/GAS_REPORT_GUIDE.md)** - 智能合约Gas使用报告生成工具
+
+### 📊 Gas使用分析
+
+项目包含专门的Gas报告生成器，用于生成清洁、可读的Gas使用报告：
+
+```bash
+# 生成Gas报告
+cd contracts
+npm run gas:report
+
+# 查看详细分析
+npm run gas:analyze
+```
+
+#### 功能特性
+- **自动清理乱码** - 去除ANSI控制字符
+- **智能数据提取** - 准确提取gas使用数据
+- **格式化输出** - 标准markdown表格格式
+- **中文界面** - 友好的中文字段说明
+- **CI/CD集成** - 自动在PR中生成报告
+
+详细使用指南: [docs/GAS_REPORT_GUIDE.md](docs/GAS_REPORT_GUIDE.md)
 
 ### 测试覆盖率
 
