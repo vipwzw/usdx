@@ -240,6 +240,8 @@ describe("USDXToken", () => {
       await usdxToken.setRegionRestrictionsEnabled(true);
       // Set restricted region code for addr1
       await usdxToken.setRegionCode(addr1.address, 999);
+      // Don't set region 999 as allowed (only allow region 1)
+      await usdxToken.setAllowedRegion(1, true);
 
       const restrictionCode = await usdxToken.detectTransferRestriction(
         owner.address,
@@ -247,6 +249,27 @@ describe("USDXToken", () => {
         ethers.parseUnits("100", 6),
       );
       expect(restrictionCode).to.equal(15); // REGION_RESTRICTION
+    });
+
+    it("Should allow transfers between allowed regions", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Enable region restrictions
+      await usdxToken.setRegionRestrictionsEnabled(true);
+      // Set both users to allowed regions
+      await usdxToken.setRegionCode(owner.address, 1); // US
+      await usdxToken.setRegionCode(addr1.address, 44); // UK
+      // Allow both regions
+      await usdxToken.setAllowedRegion(1, true);
+      await usdxToken.setAllowedRegion(44, true);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(0); // SUCCESS
     });
 
     it("Should detect daily limit exceeded", async () => {
@@ -596,6 +619,48 @@ describe("USDXToken", () => {
       expect(await usdxToken.isKYCRequired()).to.be.true;
       expect(await usdxToken.isWhitelistEnabled()).to.be.true;
       expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.false;
+    });
+
+    it("Should return correct region information", async () => {
+      // Test default region code (should be 0)
+      expect(await usdxToken.getRegionCode(addr1.address)).to.equal(0);
+
+      // Test setting and getting region code
+      await usdxToken.setRegionCode(addr1.address, 1);
+      expect(await usdxToken.getRegionCode(addr1.address)).to.equal(1);
+
+      // Test allowed regions (should be false by default)
+      expect(await usdxToken.isRegionAllowed(1)).to.be.false;
+      expect(await usdxToken.isRegionAllowed(0)).to.be.false;
+
+      // Test setting allowed region
+      await usdxToken.setAllowedRegion(1, true);
+      expect(await usdxToken.isRegionAllowed(1)).to.be.true;
+      expect(await usdxToken.isRegionAllowed(0)).to.be.false;
+    });
+
+    it("Should return correct compliance status information", async () => {
+      // Test new query functions for authorization and validation
+      expect(await usdxToken.isTransferAuthorizationRequired()).to.be.false;
+      expect(await usdxToken.isRecipientValidationRequired()).to.be.false;
+      expect(await usdxToken.isAuthorizedSender(addr1.address)).to.be.false;
+      expect(await usdxToken.isValidRecipient(addr1.address)).to.be.false;
+
+      // Test setting authorization requirement
+      await usdxToken.setTransferAuthorizationRequired(true);
+      expect(await usdxToken.isTransferAuthorizationRequired()).to.be.true;
+
+      // Test setting recipient validation requirement
+      await usdxToken.setRecipientValidationRequired(true);
+      expect(await usdxToken.isRecipientValidationRequired()).to.be.true;
+
+      // Test setting authorized sender
+      await usdxToken.setAuthorizedSender(addr1.address, true);
+      expect(await usdxToken.isAuthorizedSender(addr1.address)).to.be.true;
+
+      // Test setting valid recipient
+      await usdxToken.setValidRecipient(addr1.address, true);
+      expect(await usdxToken.isValidRecipient(addr1.address)).to.be.true;
     });
   });
 });

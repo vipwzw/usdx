@@ -627,6 +627,11 @@ contract USDXToken is
      * @return True if restricted
      */
     function _isRegionRestricted(address from, address to) internal view returns (bool) {
+        // Skip region check for zero address (mint/burn operations)
+        if (from == address(0) || to == address(0)) {
+            return false;
+        }
+
         // Both from and to must be in the allowed region list
         if (!_allowedRegions[_regionCode[from]] || !_allowedRegions[_regionCode[to]]) {
             return true;
@@ -871,5 +876,23 @@ contract USDXToken is
      */
     function isRegionRestrictionsEnabled() external view returns (bool) {
         return _regionRestrictionsEnabled;
+    }
+
+    /**
+     * @notice Gets the region code for an address
+     * @param account Address to check
+     * @return The region code for the address
+     */
+    function getRegionCode(address account) external view returns (uint256) {
+        return _regionCode[account];
+    }
+
+    /**
+     * @notice Checks if a region code is allowed
+     * @param regionCode Region code to check
+     * @return True if the region is allowed
+     */
+    function isRegionAllowed(uint256 regionCode) external view returns (bool) {
+        return _allowedRegions[regionCode];
     }
 }
