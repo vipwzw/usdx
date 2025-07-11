@@ -9,7 +9,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { IERC1404, RestrictionMessages } from "./interfaces/IERC1404.sol";
-import { console } from "hardhat/console.sol";
+
+//import { console } from "hardhat/console.sol";
 
 /**
  * @title USDX Stablecoin Token
@@ -185,7 +186,7 @@ contract USDXToken is
         // Set admin as KYC verified before minting
         _kycVerified[admin] = true;
 
-        console.log("initialSupply", initialSupply);
+        //console.log("initialSupply", initialSupply);
         // Mint initial supply to admin
         if (initialSupply > 0) {
             _mint(admin, initialSupply);

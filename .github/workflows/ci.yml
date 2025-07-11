@@ -176,10 +176,7 @@ jobs:
           export CI=true
 
           # 使用npm脚本生成清洁的gas报告
-          npm run gas:report || {
-            echo "Gas报告生成失败，尝试使用备用方法..."
-            npm run gas:test || echo "备用方法也失败，将生成错误报告"
-          }
+          npm run gas:report || echo "Gas报告生成失败，已生成错误报告"
 
       - name: Comment gas report on PR
         if: github.event_name == 'pull_request'
