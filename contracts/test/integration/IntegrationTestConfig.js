@@ -70,20 +70,35 @@ class IntegrationTestBase {
   async setupContracts() {
     // 获取测试账户
     const signers = await ethers.getSigners();
-    [
-      this.accounts.owner,
-      this.accounts.governor1,
-      this.accounts.governor2,
-      this.accounts.governor3,
-      this.accounts.user1,
-      this.accounts.user2,
-      this.accounts.user3,
-      this.accounts.minter,
-      this.accounts.blacklister,
-      this.accounts.pauser,
-      this.accounts.compliance,
-      this.accounts.upgrader,
+    const [
+      owner,
+      governor1,
+      governor2,
+      governor3,
+      user1,
+      user2,
+      user3,
+      minter,
+      blacklister,
+      pauser,
+      compliance,
+      upgrader,
     ] = signers;
+
+    this.accounts = {
+      owner,
+      governor1,
+      governor2,
+      governor3,
+      user1,
+      user2,
+      user3,
+      minter,
+      blacklister,
+      pauser,
+      compliance,
+      upgrader,
+    };
 
     // 部署USDX Token
     await this.deployUSDXToken();
