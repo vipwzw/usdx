@@ -3,7 +3,7 @@ const localConfig = require("../local-config");
 
 async function main() {
   console.log("🚀 开始本地测试部署和验证");
-  console.log("=" * 50);
+  console.log("=".repeat(50));
 
   // 获取本地配置
   const config = localConfig;
@@ -154,7 +154,7 @@ async function main() {
   console.log("\n💾 部署信息已保存到 local-deployment.json");
 
   console.log("\n🎉 本地测试完成！");
-  console.log("=" * 50);
+  console.log("=".repeat(50));
 }
 
 main()
