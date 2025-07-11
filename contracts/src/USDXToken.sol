@@ -78,10 +78,18 @@ contract USDXToken is
     uint8 public constant AMOUNT_EXCEEDS_LIMIT = 8;
     /// @notice Restriction code for sanctioned address
     uint8 public constant SANCTIONED_ADDRESS = 9;
+    /// @notice Restriction code for unauthorized transfer
+    uint8 public constant UNAUTHORIZED_TRANSFER = 10;
+    /// @notice Restriction code for invalid recipient
+    uint8 public constant INVALID_RECIPIENT = 11;
+    /// @notice Restriction code when transfer is locked
+    uint8 public constant TRANSFER_LOCKED = 12;
+    /// @notice Restriction code for compliance violation
+    uint8 public constant COMPLIANCE_VIOLATION = 13;
     /// @notice Restriction code when holder limit exceeded
-    uint8 public constant EXCEEDS_HOLDER_LIMIT = 10;
+    uint8 public constant EXCEEDS_HOLDER_LIMIT = 14;
     /// @notice Restriction code for region restrictions
-    uint8 public constant REGION_RESTRICTION = 11;
+    uint8 public constant REGION_RESTRICTION = 15;
 
     // State variables
     mapping(address => bool) private _blacklisted;
@@ -91,6 +99,13 @@ contract USDXToken is
     mapping(address => uint256) private _dailyTransferAmount;
     mapping(address => uint256) private _lastTransferDay;
     mapping(address => uint256) private _regionCode;
+
+    // Additional restriction state variables
+    mapping(address => bool) private _transferLocked;
+    mapping(address => bool) private _authorizedSenders;
+    mapping(address => bool) private _validRecipients;
+    bool private _transferAuthorizationRequired;
+    bool private _recipientValidationRequired;
 
     uint256 private _maxTransferAmount;
     uint256 private _minTransferAmount;
@@ -265,6 +280,26 @@ contract USDXToken is
             return EXCEEDS_HOLDER_LIMIT;
         }
 
+        // Check if transfers are locked for sender or receiver
+        if (_transferLocked[from] || _transferLocked[to]) {
+            return TRANSFER_LOCKED;
+        }
+
+        // Check transfer authorization requirements
+        if (_transferAuthorizationRequired && from != address(0) && !_authorizedSenders[from]) {
+            return UNAUTHORIZED_TRANSFER;
+        }
+
+        // Check recipient validation requirements
+        if (_recipientValidationRequired && to != address(0) && !_validRecipients[to]) {
+            return INVALID_RECIPIENT;
+        }
+
+        // Check for compliance violations (combined check for multiple violations)
+        if (_hasComplianceViolation(from, to, value)) {
+            return COMPLIANCE_VIOLATION;
+        }
+
         // Check region restrictions
         if (_regionRestrictionsEnabled && _isRegionRestricted(from, to)) {
             return REGION_RESTRICTION;
@@ -435,6 +470,123 @@ contract USDXToken is
     }
 
     /**
+     * @notice Sets the maximum number of token holders allowed
+     * @param maxHolders Maximum number of holders
+     */
+    function setMaxHolderCount(uint256 maxHolders) external onlyRole(COMPLIANCE_ROLE) {
+        _maxHolderCount = maxHolders;
+        emit HolderLimitsUpdated(maxHolders);
+    }
+
+    /**
+     * @notice Enables or disables region restrictions
+     * @param enabled Whether region restrictions should be enabled
+     */
+    function setRegionRestrictionsEnabled(bool enabled) external onlyRole(COMPLIANCE_ROLE) {
+        _regionRestrictionsEnabled = enabled;
+        emit ComplianceConfigUpdated(_kycRequired, _whitelistEnabled, enabled);
+    }
+
+    /**
+     * @notice Sets the region code for an address
+     * @param account Address to set region code for
+     * @param regionCode Region code (999 = restricted region)
+     */
+    function setRegionCode(address account, uint256 regionCode) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _regionCode[account] = regionCode;
+    }
+
+    /**
+     * @notice Sets transfer amount limits
+     * @param maxAmount Maximum transfer amount
+     * @param minAmount Minimum transfer amount
+     */
+    function setTransferLimits(
+        uint256 maxAmount,
+        uint256 minAmount
+    ) external onlyRole(COMPLIANCE_ROLE) {
+        require(maxAmount >= minAmount, "Max amount must be greater than min amount");
+        _maxTransferAmount = maxAmount;
+        _minTransferAmount = minAmount;
+        emit TransferLimitsUpdated(maxAmount, minAmount);
+    }
+
+    /**
+     * @notice Sets compliance configuration
+     * @param kycRequired Whether KYC verification is required
+     * @param whitelistEnabled Whether whitelist is enabled
+     * @param regionRestricted Whether region restrictions are enabled
+     */
+    function setComplianceConfig(
+        bool kycRequired,
+        bool whitelistEnabled,
+        bool regionRestricted
+    ) external onlyRole(COMPLIANCE_ROLE) {
+        _kycRequired = kycRequired;
+        _whitelistEnabled = whitelistEnabled;
+        _regionRestrictionsEnabled = regionRestricted;
+        emit ComplianceConfigUpdated(kycRequired, whitelistEnabled, regionRestricted);
+    }
+
+    /**
+     * @notice Sets transfer lock status for an address
+     * @param account Address to lock/unlock
+     * @param locked Whether transfers should be locked
+     */
+    function setTransferLocked(address account, bool locked) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _transferLocked[account] = locked;
+    }
+
+    /**
+     * @notice Sets transfer authorization requirement
+     * @param required Whether transfer authorization is required
+     */
+    function setTransferAuthorizationRequired(bool required) external onlyRole(COMPLIANCE_ROLE) {
+        _transferAuthorizationRequired = required;
+    }
+
+    /**
+     * @notice Sets authorized sender status
+     * @param account Address to authorize/deauthorize
+     * @param authorized Whether the address is authorized to send
+     */
+    function setAuthorizedSender(
+        address account,
+        bool authorized
+    ) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _authorizedSenders[account] = authorized;
+    }
+
+    /**
+     * @notice Sets recipient validation requirement
+     * @param required Whether recipient validation is required
+     */
+    function setRecipientValidationRequired(bool required) external onlyRole(COMPLIANCE_ROLE) {
+        _recipientValidationRequired = required;
+    }
+
+    /**
+     * @notice Sets valid recipient status
+     * @param account Address to validate/invalidate
+     * @param valid Whether the address is a valid recipient
+     */
+    function setValidRecipient(address account, bool valid) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _validRecipients[account] = valid;
+    }
+
+    /**
      * @notice Pauses all token transfers
      */
     function pause() external onlyRole(PAUSER_ROLE) {
@@ -477,6 +629,54 @@ contract USDXToken is
         // Implementation depends on specific regional requirements
         // For demo, we'll check if addresses have restricted region codes
         return _regionCode[from] == 999 || _regionCode[to] == 999;
+    }
+
+    /**
+     * @notice Checks for compliance violations
+     * @param from Sender address
+     * @param to Recipient address
+     * @param value Transfer amount
+     * @return True if there's a compliance violation
+     */
+    function _hasComplianceViolation(
+        address from,
+        address to,
+        uint256 value
+    ) internal view returns (bool) {
+        // Check for various compliance violations
+
+        // Example 1: Large transfers to new accounts without proper verification
+        if (
+            value > _maxTransferAmount / 2 &&
+            to != address(0) &&
+            balanceOf(to) == 0 &&
+            !_kycVerified[to]
+        ) {
+            return true;
+        }
+
+        // Example 2: Very large transfers (>75% of max) even to verified accounts (suspicious activity)
+        if (value > (_maxTransferAmount * 3) / 4 && to != address(0) && balanceOf(to) == 0) {
+            return true;
+        }
+
+        // Example 3: Transfers involving multiple restricted factors
+        if (_sanctioned[from] && _blacklisted[to]) {
+            return true; // This would be caught earlier, but shows the concept
+        }
+
+        // Example 4: Region-based compliance violation
+        if (
+            _regionCode[from] != 0 &&
+            _regionCode[to] != 0 &&
+            _regionCode[from] != _regionCode[to] &&
+            _regionRestrictionsEnabled
+        ) {
+            // Different regions interacting might be a compliance issue
+            return false; // This is already handled by region restrictions
+        }
+
+        return false;
     }
 
     /**

@@ -144,6 +144,14 @@ describe("USDXToken", () => {
       const message5 = await usdxToken.messageForTransferRestriction(5);
       const message6 = await usdxToken.messageForTransferRestriction(6);
       const message7 = await usdxToken.messageForTransferRestriction(7);
+      const message8 = await usdxToken.messageForTransferRestriction(8);
+      const message9 = await usdxToken.messageForTransferRestriction(9);
+      const message10 = await usdxToken.messageForTransferRestriction(10);
+      const message11 = await usdxToken.messageForTransferRestriction(11);
+      const message12 = await usdxToken.messageForTransferRestriction(12);
+      const message13 = await usdxToken.messageForTransferRestriction(13);
+      const message14 = await usdxToken.messageForTransferRestriction(14);
+      const message15 = await usdxToken.messageForTransferRestriction(15);
 
       expect(message0).to.equal("Transfer allowed");
       expect(message1).to.equal("Transfer failed");
@@ -153,6 +161,222 @@ describe("USDXToken", () => {
       expect(message5).to.equal("Contract is paused");
       expect(message6).to.equal("Sender KYC not verified");
       expect(message7).to.equal("Receiver KYC not verified");
+      expect(message8).to.equal("Amount exceeds limit");
+      expect(message9).to.equal("Address sanctioned");
+      expect(message10).to.equal("Transfer unauthorized");
+      expect(message11).to.equal("Invalid recipient");
+      expect(message12).to.equal("Transfer locked");
+      expect(message13).to.equal("Compliance violation");
+      expect(message14).to.equal("Exceeds holder limit");
+      expect(message15).to.equal("Region restricted");
+    });
+
+    it("Should detect amount exceeds maximum limit", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // First, mint enough tokens to owner to avoid balance check
+      const mintAmount = ethers.parseUnits("1100000", 6); // 1.1M tokens
+      await usdxToken.mint(owner.address, mintAmount);
+
+      // Try to transfer more than maximum limit (1M tokens)
+      const maxAmount = ethers.parseUnits("1000001", 6);
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        maxAmount,
+      );
+      expect(restrictionCode).to.equal(8); // AMOUNT_EXCEEDS_LIMIT
+    });
+
+    it("Should detect amount below minimum limit", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Try to transfer less than minimum limit (1 token)
+      const minAmount = ethers.parseUnits("0.5", 6);
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        minAmount,
+      );
+      expect(restrictionCode).to.equal(8); // AMOUNT_EXCEEDS_LIMIT
+    });
+
+    it("Should detect sanctioned address", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+      await usdxToken.setSanctioned(addr1.address, true);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(9); // SANCTIONED_ADDRESS
+    });
+
+    it("Should detect holder limit exceeded", async () => {
+      // First, set a very low holder limit
+      await usdxToken.setMaxHolderCount(1); // Current holder count is already 1 (owner)
+
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Try to transfer to a new holder (addr1 has 0 balance)
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(14); // EXCEEDS_HOLDER_LIMIT
+    });
+
+    it("Should detect region restriction", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Enable region restrictions
+      await usdxToken.setRegionRestrictionsEnabled(true);
+      // Set restricted region code for addr1
+      await usdxToken.setRegionCode(addr1.address, 999);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(15); // REGION_RESTRICTION
+    });
+
+    it("Should detect daily limit exceeded", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+      await usdxToken.setKYCVerified(addr2.address, true);
+
+      // Set a daily limit of 500 tokens for owner
+      await usdxToken.setDailyTransferLimit(owner.address, ethers.parseUnits("500", 6));
+
+      // First, make a transfer to consume part of the daily limit
+      await usdxToken.transfer(addr2.address, ethers.parseUnits("200", 6));
+
+      // Now try to transfer 400 more tokens (200 + 400 = 600 > 500 limit)
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("400", 6),
+      );
+      expect(restrictionCode).to.equal(8); // AMOUNT_EXCEEDS_LIMIT
+    });
+
+    it("Should detect unauthorized transfer", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Enable transfer authorization requirement
+      await usdxToken.setTransferAuthorizationRequired(true);
+      // Don't authorize the owner as sender
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(10); // UNAUTHORIZED_TRANSFER
+    });
+
+    it("Should detect invalid recipient", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Enable recipient validation requirement
+      await usdxToken.setRecipientValidationRequired(true);
+      // Don't set addr1 as valid recipient
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(11); // INVALID_RECIPIENT
+    });
+
+    it("Should detect transfer locked", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Lock transfers for addr1
+      await usdxToken.setTransferLocked(addr1.address, true);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(12); // TRANSFER_LOCKED
+    });
+
+    it("Should detect compliance violation", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true); // Set KYC verification
+
+      // This should trigger compliance violation: very large transfer (>75% of max) to new account
+      // Even with KYC verification, this is considered suspicious activity
+      const veryLargeAmount = ethers.parseUnits("800000", 6); // 80% of max transfer (1M * 0.8)
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        veryLargeAmount,
+      );
+      expect(restrictionCode).to.equal(13); // COMPLIANCE_VIOLATION
+    });
+
+    it("Should allow authorized transfers when authorization required", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Enable authorization requirement and authorize owner
+      await usdxToken.setTransferAuthorizationRequired(true);
+      await usdxToken.setAuthorizedSender(owner.address, true);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(0); // SUCCESS
+    });
+
+    it("Should allow transfers to valid recipients when validation required", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Enable recipient validation and set addr1 as valid
+      await usdxToken.setRecipientValidationRequired(true);
+      await usdxToken.setValidRecipient(addr1.address, true);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(0); // SUCCESS
+    });
+
+    it("Should allow transfers when not locked", async () => {
+      await usdxToken.setKYCVerified(owner.address, true);
+      await usdxToken.setKYCVerified(addr1.address, true);
+
+      // Set and then unset transfer lock
+      await usdxToken.setTransferLocked(addr1.address, true);
+      await usdxToken.setTransferLocked(addr1.address, false);
+
+      const restrictionCode = await usdxToken.detectTransferRestriction(
+        owner.address,
+        addr1.address,
+        ethers.parseUnits("100", 6),
+      );
+      expect(restrictionCode).to.equal(0); // SUCCESS
     });
   });
 
