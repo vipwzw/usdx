@@ -73,7 +73,15 @@
     "dev": "hardhat node --hostname 0.0.0.0",
     "typechain": "hardhat typechain",
     "export": "hardhat export --export deployments.json",
-    "export:all": "npm run flatten:all && npm run export && npm run docgen"
+    "export:all": "npm run flatten:all && npm run export && npm run docgen",
+    "debug": "node --inspect-brk scripts/debug-demo.js",
+    "debug:test": "node --inspect-brk node_modules/.bin/hardhat test",
+    "debug:deploy": "node --inspect-brk node_modules/.bin/hardhat run scripts/deploy.js --network localhost",
+    "debug:demo": "node scripts/debug-demo.js",
+    "debug:solidity": "node scripts/simple-debug.js",
+    "debug:hardhat": "echo '请先运行 npm run debug:solidity 获取交易哈希，然后运行: npx hardhat debug <transaction_hash>'",
+    "debug:console": "DEBUG=* npm test",
+    "debug:verbose": "HARDHAT_VERBOSE=true npm test"
   },
   "keywords": [
     "ethereum",

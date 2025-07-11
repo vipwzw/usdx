@@ -53,6 +53,22 @@
   "typescript.preferences.includePackageJsonAutoImports": "on",
   "typescript.suggest.autoImports": true,
 
+  // JavaScript 智能感知增强
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.preferences.includePackageJsonAutoImports": "on",
+  "javascript.suggest.completeFunctionCalls": true,
+  "javascript.suggest.names": true,
+  "javascript.suggest.paths": true,
+  "javascript.suggest.enabled": true,
+
+  // 代码跳转增强
+  "editor.gotoLocation.multipleReferences": "peek",
+  "editor.gotoLocation.multipleDefinitions": "peek",
+  "editor.gotoLocation.multipleDeclarations": "peek",
+  "editor.gotoLocation.multipleImplementations": "peek",
+  "editor.gotoLocation.multipleTypeDefinitions": "peek",
+
   // 工作区特定设置
   "search.exclude": {
     "**/node_modules": true,
@@ -76,5 +92,18 @@
   "terminal.integrated.defaultProfile.linux": "bash",
 
   // 调试配置
-  "debug.allowBreakpointsEverywhere": true
+  "debug.allowBreakpointsEverywhere": true,
+
+  // Solidity调试增强
+  "solidity.enabledAsYouTypeCompilationErrorCheck": true,
+  "solidity.monoRepoSupport": false,
+  "solidity.formatter": "prettier",
+  "solidity.linter": "solhint",
+  "solidity.solhintRules": "./contracts/.solhint.json",
+  "solidity.remappings": [],
+  "solidity.enableLocalNodeCompiler": false,
+
+  // 调试和错误检查
+  "solidity.compile.forceCompile": false,
+  "solidity.telemetry": false
 }

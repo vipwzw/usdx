@@ -1,0 +1,55 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@scripts/*": ["./scripts/*"],
+      "@test/*": ["./test/*"],
+      "@typechain/*": ["./typechain-types/*"],
+      "@artifacts/*": ["./artifacts/*"]
+    },
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": false,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "removeComments": false,
+    "strict": false,
+    "alwaysStrict": false,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "scripts/**/*",
+    "test/**/*",
+    "*.js",
+    "*.json"
+  ],
+  "exclude": [
+    "node_modules",
+    "cache",
+    "artifacts/build-info",
+    "artifacts/contracts/build-info",
+    "coverage",
+    "dist",
+    "typechain-types"
+  ],
+  "typeAcquisition": {
+    "enable": true,
+    "include": [
+      "node",
+      "mocha",
+      "chai"
+    ]
+  }
+}
