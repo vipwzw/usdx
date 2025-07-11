@@ -1,0 +1,85 @@
+{
+  "compilers": [
+    {
+      "version": "0.8.22",
+      "settings": {
+        "optimizer": {
+          "enabled": true,
+          "runs": 200
+        },
+        "evmVersion": "london",
+        "viaIR": false,
+        "metadata": {
+          "useLiteralContent": true,
+          "bytecodeHash": "none"
+        },
+        "outputSelection": {
+          "*": {
+            "*": [
+              "abi",
+              "evm.bytecode",
+              "evm.deployedBytecode",
+              "evm.methodIdentifiers",
+              "metadata",
+              "devdoc",
+              "userdoc",
+              "storageLayout",
+              "evm.gasEstimates"
+            ],
+            "": ["ast"]
+          }
+        },
+        "remappings": [
+          "@openzeppelin/=node_modules/@openzeppelin/",
+          "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+          "@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/"
+        ],
+        "libraries": {}
+      }
+    }
+  ],
+  "sources": {
+    "contracts": ["src/**/*.sol"],
+    "tests": ["test/**/*.sol"]
+  },
+  "dependencies": [
+    "node_modules/@openzeppelin/contracts/**/*.sol",
+    "node_modules/@openzeppelin/contracts-upgradeable/**/*.sol"
+  ],
+  "language": {
+    "solidity": {
+      "languageServer": {
+        "enable": true,
+        "trace": "verbose"
+      },
+      "formatter": "prettier",
+      "linter": "solhint",
+      "enabledAsYouTypeCompilationErrorCheck": true,
+      "validationDelay": 1500,
+      "packageDefaultDependenciesContractsDirectory": "contracts",
+      "packageDefaultDependenciesDirectory": "node_modules"
+    }
+  },
+  "analysis": {
+    "enableSemanticHighlighting": true,
+    "enableHover": true,
+    "enableCompletion": true,
+    "enableSignatureHelp": true,
+    "enableDefinition": true,
+    "enableReferences": true,
+    "enableDocumentSymbol": true,
+    "enableWorkspaceSymbol": true,
+    "enableCodeLens": true,
+    "enableDiagnostics": true,
+    "enableFormatting": true
+  },
+  "workspace": {
+    "exclude": [
+      "**/node_modules/**",
+      "**/cache/**",
+      "**/artifacts/**",
+      "**/coverage/**",
+      "**/dist/**"
+    ]
+  }
+}

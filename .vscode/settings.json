@@ -1,155 +1,80 @@
 {
-  // 编辑器配置
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.detectIndentation": false,
-  "editor.trimAutoWhitespace": true,
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true,
-
-  // 文件关联
-  "files.associations": {
-    "*.sol": "solidity",
-    "*.env.example": "dotenv",
-    "*.env.local": "dotenv",
-    "hardhat.config.js": "javascript"
-  },
-
-  // Solidity 配置
-  "solidity.compiler.version": "0.8.22",
-  "solidity.defaultCompiler": "remote",
+  "solidity.defaultCompiler": "hardhat",
   "solidity.compileUsingRemoteVersion": "0.8.22",
-  "solidity.enabledAsYouTypeCompilationErrorCheck": true,
-  "solidity.validationDelay": 1500,
   "solidity.packageDefaultDependenciesContractsDirectory": "contracts",
   "solidity.packageDefaultDependenciesDirectory": "node_modules",
 
-  // JavaScript/TypeScript 配置
-  "javascript.preferences.quoteStyle": "double",
-  "typescript.preferences.quoteStyle": "double",
-  "javascript.format.semicolons": "insert",
-  "typescript.format.semicolons": "insert",
+  // Solidity编译和分析配置
+  "solidity.enabledAsYouTypeCompilationErrorCheck": true,
+  "solidity.validationDelay": 1500,
+  "solidity.enableLocalNodeCompiler": false,
 
-  // ESLint 配置
-  "eslint.workingDirectories": ["contracts"],
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
+  // 文件关联和语法高亮
+  "files.associations": {
+    "*.sol": "solidity"
+  },
 
-  // Prettier 配置
+  // 智能感知和自动完成
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+
+  // 代码格式化
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+
+  // Prettier配置
   "prettier.configPath": "./contracts/.prettierrc",
   "prettier.ignorePath": "./contracts/.prettierignore",
 
-  // 文件排除
-  "files.exclude": {
-    "**/node_modules": true,
-    "**/coverage": true,
-    "**/cache": true,
-    "**/artifacts": true,
-    "**/typechain-types": true,
-    "**/.git": true,
-    "**/.DS_Store": true,
-    "**/Thumbs.db": true
+  // 特定文件类型格式化器
+  "[solidity]": {
+    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
   },
 
-  // 搜索排除
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/coverage": true,
-    "**/cache": true,
-    "**/artifacts": true,
-    "**/typechain-types": true,
-    "**/*.log": true
-  },
-
-  // 终端配置
-  "terminal.integrated.defaultProfile.osx": "bash",
-  "terminal.integrated.defaultProfile.linux": "bash",
-  "terminal.integrated.cwd": "${workspaceFolder}",
-
-  // Git 配置
-  "git.ignoreLimitWarning": true,
-  "git.autofetch": true,
-
-  // 智能合约特定配置
-  "solidity.formatter": "prettier",
-  "solidity.linter": "solhint",
-  "solidity.enabledSolhint": true,
-
-  // 自动保存
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 2000,
-
-  // 代码提示
-  "editor.suggestSelection": "first",
-  "editor.acceptSuggestionOnCommitCharacter": false,
-  "editor.acceptSuggestionOnEnter": "on",
-
-  // 括号匹配
-  "editor.bracketPairColorization.enabled": true,
-  "editor.guides.bracketPairs": true,
-
-  // 行号和折叠
-  "editor.lineNumbers": "on",
-  "editor.folding": true,
-  "editor.foldingStrategy": "indentation",
-
-  // 小地图
-  "editor.minimap.enabled": true,
-  "editor.minimap.maxColumn": 120,
-
-  // 字体配置
-  "editor.fontFamily": "'JetBrains Mono', 'Fira Code', 'Source Code Pro', Consolas, monospace",
-  "editor.fontLigatures": true,
-  "editor.fontSize": 14,
-
-  // 颜色主题 (可选)
-  "workbench.colorTheme": "Default Dark+",
-
-  // 扩展推荐
-  "extensions.showRecommendationsOnlyOnDemand": false,
-
-  // TypeScript 设置
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.suggest.autoImports": true,
-
-  // JSON 格式化
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-
-  // JavaScript 格式化
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
-  // Solidity 格式化
-  "[solidity]": {
+  "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
-  // Markdown 格式化
-  "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.wordWrap": "on"
+  // 路径智能感知
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+
+  // 工作区特定设置
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/cache": true,
+    "**/artifacts": true,
+    "**/typechain-types": true,
+    "**/coverage": true
   },
 
-  // YAML 格式化
-  "[yaml]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  "files.exclude": {
+    "**/cache": true,
+    "**/artifacts": false,
+    "**/typechain-types": false
+  },
+
+  // Git配置
+  "git.ignoreLimitWarning": true,
+
+  // 终端配置
+  "terminal.integrated.defaultProfile.osx": "bash",
+  "terminal.integrated.defaultProfile.linux": "bash",
+
+  // 调试配置
+  "debug.allowBreakpointsEverywhere": true
 }

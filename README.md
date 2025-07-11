@@ -103,6 +103,28 @@ npm run compile
 npm test
 ```
 
+### 🎯 Solidity 源代码跳转设置
+
+支持完整的代码导航功能，快速配置：
+
+```bash
+# 自动设置（推荐）
+# Linux/macOS
+./scripts/setup-code-navigation.sh
+
+# Windows  
+scripts\setup-code-navigation.bat
+```
+
+#### 功能特性
+- **函数跳转**: `Ctrl+Click` 或 `F12` 跳转到定义
+- **查找引用**: `Shift+F12` 查找所有使用位置  
+- **重命名符号**: `F2` 智能重命名变量/函数
+- **智能提示**: 自动完成和参数提示
+- **悬停信息**: 鼠标悬停显示文档
+
+详细配置指南: [docs/SOLIDITY_CODE_NAVIGATION.md](docs/SOLIDITY_CODE_NAVIGATION.md)
+
 ### 测试覆盖率
 
 ```bash
@@ -208,11 +230,11 @@ npm run size           # 合约大小分析
 
 ### 测试分类
 
-| 测试类型 | 数量 | 覆盖范围 |
-|----------|------|----------|
+| 测试类型 | 数量 | 覆盖范围     |
+| -------- | ---- | ------------ |
 | 单元测试 | 85个 | 基础功能验证 |
 | 集成测试 | 15个 | 合约交互测试 |
-| 安全测试 | 6个 | 安全机制验证 |
+| 安全测试 | 6个  | 安全机制验证 |
 
 ### 运行特定测试
 
@@ -259,14 +281,14 @@ REPORT_GAS=true npx hardhat test
 
 USDX完整实现ERC-1404标准，支持16种转账限制检测：
 
-| 代码 | 限制类型 | 说明 |
-|------|----------|------|
-| 0 | SUCCESS | 允许转账 |
-| 2 | BLACKLISTED_SENDER | 发送方被黑名单 |
-| 3 | BLACKLISTED_RECEIVER | 接收方被黑名单 |
-| 6 | INVALID_KYC_SENDER | 发送方KYC无效 |
-| 7 | INVALID_KYC_RECEIVER | 接收方KYC无效 |
-| 8 | AMOUNT_EXCEEDS_LIMIT | 超出转账限额 |
+| 代码 | 限制类型             | 说明           |
+| ---- | -------------------- | -------------- |
+| 0    | SUCCESS              | 允许转账       |
+| 2    | BLACKLISTED_SENDER   | 发送方被黑名单 |
+| 3    | BLACKLISTED_RECEIVER | 接收方被黑名单 |
+| 6    | INVALID_KYC_SENDER   | 发送方KYC无效  |
+| 7    | INVALID_KYC_RECEIVER | 接收方KYC无效  |
+| 8    | AMOUNT_EXCEEDS_LIMIT | 超出转账限额   |
 
 ### 监管合规
 
