@@ -2,7 +2,6 @@
 
 const { execSync } = require("child_process");
 const fs = require("fs");
-const path = require("path");
 
 /**
  * 生成清洁的Gas使用报告
@@ -25,9 +24,39 @@ async function generateGasReport() {
 
     // 清理ANSI控制字符
     const cleanOutput = testOutput
-      .replace(/\x1b\[[0-9;]*m/g, "") // ANSI颜色代码
-      .replace(/\u001b\[[0-9;]*m/g, "") // Unicode转义序列
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // 控制字符
+      .replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g"), "") // ANSI颜色代码
+      .replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g"), "") // Unicode转义序列
+      .replace(
+        new RegExp(
+          `[${String.fromCharCode(
+            0,
+            8,
+            11,
+            12,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            127,
+          )}]`,
+          "g",
+        ),
+        "",
+      ) // 控制字符
       .replace(/\[\d+m/g, "") // 其他颜色代码
       .replace(/\r/g, ""); // 回车符
 
@@ -103,8 +132,8 @@ function extractAndFormatGasReport(output) {
       // 如果行包含有用信息，添加到数据行
       if (
         cleanLine &&
-        !cleanLine.match(/^[\|\-\s]+$/) && // 不是纯分隔符
-        !cleanLine.match(/^[·│\|\-\s]+$/)
+        !cleanLine.match(/^[|\-\s]+$/) && // 不是纯分隔符
+        !cleanLine.match(/^[·│|\-\s]+$/)
       ) {
         // 不是特殊字符行
         dataLines.push(cleanLine);
@@ -249,7 +278,9 @@ function createFallbackReport(output) {
 
   // 查找包含gas信息的行
   for (const line of lines) {
-    const cleanLine = line.replace(/\x1b\[[0-9;]*m/g, "").trim();
+    const cleanLine = line
+      .replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g"), "")
+      .trim();
 
     if (
       cleanLine.includes("gas") ||
