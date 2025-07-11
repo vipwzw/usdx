@@ -1,96 +1,240 @@
 #!/usr/bin/env node
 
-const { execSync } = require("child_process");
+const { spawn } = require("child_process");
 const fs = require("fs");
+const path = require("path");
 
 /**
  * 生成清洁的Gas使用报告
- * 去除ANSI控制字符和乱码，提取有用的gas信息
+ * 使用流式处理避免缓冲区溢出
  */
 async function generateGasReport() {
   try {
     console.log("🔥 开始生成Gas使用报告...");
 
-    // 设置环境变量禁用颜色输出
-    process.env.NO_COLOR = "1";
-    process.env.FORCE_COLOR = "0";
+    // 设置环境变量禁用颜色输出和减少日志
+    const env = {
+      ...process.env,
+      NO_COLOR: "1",
+      FORCE_COLOR: "0",
+      REPORT_GAS: "true",
+      NODE_ENV: "test",
+      // 减少Hardhat输出
+      HARDHAT_VERBOSE: "false",
+      // 禁用一些调试输出
+      DEBUG: "",
+    };
 
-    // 运行测试并生成gas报告
-    console.log("📊 运行测试并收集gas数据...");
-    const testOutput = execSync("REPORT_GAS=true npx hardhat test", {
-      encoding: "utf8",
-      stdio: "pipe",
-    });
+         console.log("📊 运行优化的gas分析测试...");
 
-    // 清理ANSI控制字符
-    const cleanOutput = testOutput
-      .replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g"), "") // ANSI颜色代码
-      .replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g"), "") // Unicode转义序列
-      .replace(
-        new RegExp(
-          `[${String.fromCharCode(
-            0,
-            8,
-            11,
-            12,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20,
-            21,
-            22,
-            23,
-            24,
-            25,
-            26,
-            27,
-            28,
-            29,
-            30,
-            31,
-            127,
-          )}]`,
-          "g",
-        ),
-        "",
-      ) // 控制字符
-      .replace(/\[\d+m/g, "") // 其他颜色代码
-      .replace(/\r/g, ""); // 回车符
+    // 使用专门的gas测试脚本
+    const { runGasTests } = require('./gas-test.js');
+    const { stdout: gasOutput } = await runGasTests();
+
+    // 清理输出
+    const cleanOutput = cleanTestOutput(gasOutput);
 
     // 提取和格式化gas报告
     const report = extractAndFormatGasReport(cleanOutput);
 
     // 保存报告
-    fs.writeFileSync("gas-report.txt", report);
+    const reportPath = path.join(process.cwd(), "gas-report.txt");
+    fs.writeFileSync(reportPath, report);
 
-    console.log("✅ Gas报告已生成: gas-report.txt");
+    console.log("✅ Gas报告已生成:", reportPath);
     console.log("📝 报告预览:");
     console.log("─".repeat(80));
     console.log(report.slice(0, 1000) + (report.length > 1000 ? "..." : ""));
     console.log("─".repeat(80));
+
+    return report;
   } catch (error) {
     console.error("❌ 生成Gas报告时出错:", error.message);
+    return createErrorReport(error);
+  }
+}
 
-    // 创建错误报告
-    const errorReport = `📊 Gas使用报告生成失败
+/**
+ * 运行Gas分析，使用流式处理避免缓冲区溢出
+ */
+async function runGasAnalysis(env) {
+  return new Promise((resolve, reject) => {
+    let output = "";
+    let errorOutput = "";
 
-错误信息: ${error.message}
+    // 只运行核心测试，避免集成测试的大量输出
+    const testCommand = [
+      "npx",
+      "hardhat",
+      "test",
+      "test/USDXToken.test.js",
+      "test/USDXGovernance.test.js",
+      "--reporter",
+      "spec",
+    ];
 
-这可能是由于以下原因：
+    console.log(`🔧 执行命令: ${testCommand.join(" ")}`);
+
+    const child = spawn(testCommand[0], testCommand.slice(1), {
+      env,
+      cwd: process.cwd(),
+      stdio: ["pipe", "pipe", "pipe"],
+      shell: false,
+    });
+
+    // 处理标准输出
+    child.stdout.on("data", data => {
+      const chunk = data.toString();
+
+      // 只保留gas相关的输出，过滤掉大量的网络日志
+      if (shouldIncludeOutput(chunk)) {
+        output += chunk;
+      }
+
+      // 实时显示进度，但限制输出量
+      if (chunk.includes("✔") || chunk.includes("passing") || chunk.includes("Gas")) {
+        process.stdout.write(".");
+      }
+    });
+
+    // 处理错误输出
+    child.stderr.on("data", data => {
+      errorOutput += data.toString();
+    });
+
+    // 处理子进程结束
+    child.on("close", code => {
+      console.log("\n🏁 测试执行完成");
+
+      if (code === 0) {
+        resolve(output);
+      } else {
+        reject(new Error(`测试失败，退出代码: ${code}\n错误输出: ${errorOutput.slice(-500)}`));
+      }
+    });
+
+    // 处理错误
+    child.on("error", error => {
+      reject(new Error(`执行失败: ${error.message}`));
+    });
+
+    // 设置超时
+    setTimeout(
+      () => {
+        child.kill("SIGTERM");
+        reject(new Error("测试执行超时 (5分钟)"));
+      },
+      5 * 60 * 1000,
+    ); // 5分钟超时
+  });
+}
+
+/**
+ * 判断是否应该包含某个输出块
+ */
+function shouldIncludeOutput(chunk) {
+  const lowerChunk = chunk.toLowerCase();
+
+  // 排除网络调用日志
+  const excludePatterns = [
+    "eth_accounts",
+    "eth_chainid",
+    "anvil_metadata",
+    "hardhat_metadata",
+    "eth_blocknumber",
+    "eth_sendtransaction",
+    "eth_gettransactionbyhash",
+    "eth_gettransactionreceipt",
+    "eth_call",
+    "contract deployment:",
+    "contract call:",
+    "value: 0 eth",
+    "gas used:",
+    "block #",
+  ];
+
+  // 如果包含排除模式，则不包含
+  for (const pattern of excludePatterns) {
+    if (lowerChunk.includes(pattern)) {
+      return false;
+    }
+  }
+
+  // 包含gas相关信息
+  const includePatterns = [
+    "gas",
+    "solc version",
+    "optimizer",
+    "contract",
+    "method",
+    "deployments",
+    "passing",
+    "✔",
+    "❌",
+    "error",
+  ];
+
+  return includePatterns.some(pattern => lowerChunk.includes(pattern));
+}
+
+/**
+ * 清理测试输出
+ */
+function cleanTestOutput(output) {
+  return (
+    output
+      // 移除ANSI控制字符
+      .replace(/\x1b\[[0-9;]*m/g, "")
+      .replace(/\u001b\[[0-9;]*m/g, "")
+      // 移除其他控制字符
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+      // 移除颜色代码
+      .replace(/\[\d+m/g, "")
+      // 规范化换行符
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      // 移除多余的空行
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
+}
+
+/**
+ * 创建错误报告
+ */
+function createErrorReport(error) {
+  const errorReport = `📊 Gas使用报告
+
+🚫 Gas使用报告生成失败
+
+**错误信息**: ${error.message}
+
+**可能原因**:
 - 测试执行失败
 - 合约编译错误
 - 环境配置问题
+- 内存不足或缓冲区溢出
 
-请检查测试是否能够正常运行，然后重新生成报告。`;
+**解决建议**:
+1. 检查测试是否能够正常运行
+2. 尝试运行单个测试文件: \`npx hardhat test test/USDXToken.test.js\`
+3. 检查hardhat.config.js中的gas reporter配置
+4. 确保系统内存充足
 
-    fs.writeFileSync("gas-report.txt", errorReport);
+**快速修复**:
+\`\`\`bash
+cd contracts
+npm run compile
+REPORT_GAS=true npx hardhat test test/USDXToken.test.js
+\`\`\`
 
-    // 不要让脚本失败，以免影响CI
-    process.exit(0);
-  }
+😊 如需帮助，请检查CI日志获取详细信息。`;
+
+  // 保存错误报告
+  const reportPath = path.join(process.cwd(), "gas-report.txt");
+  fs.writeFileSync(reportPath, errorReport);
+
+  return errorReport;
 }
 
 /**

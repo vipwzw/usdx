@@ -56,6 +56,7 @@
     "docs:serve": "cd docs && python3 -m http.server 8080 || npx http-server",
     "gas:analyze": "REPORT_GAS=true npx hardhat test --reporter json > gas-analysis.json",
     "gas:report": "node scripts/generate-gas-report.js",
+    "gas:test": "node scripts/gas-test.js",
     "gas:compare": "hardhat run scripts/gas-comparison.js",
     "gas:optimize": "hardhat run scripts/gas-optimization.js",
     "benchmark": "hardhat run scripts/benchmark.js",
