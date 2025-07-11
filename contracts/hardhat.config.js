@@ -62,20 +62,15 @@ const gasReporterConfig = {
   rstTitle: "Gas Usage Report",
 
   // 只包含重要的合约和方法
-  excludeContracts: [
-    "Mock",
-    "Test",
-    "Debug",
-    "Example"
-  ],
+  excludeContracts: ["Mock", "Test", "Debug", "Example"],
 
   // 在CI环境中简化输出
   ...(process.env.CI === "true" && {
     showTimeSpent: false,
     showMethodSig: false,
     maxMethodDiff: 0,
-    maxDeploymentDiff: 0
-  })
+    maxDeploymentDiff: 0,
+  }),
 };
 
 // 优化网络配置，减少日志输出
@@ -87,23 +82,12 @@ const networks = {
     gasMultiplier: 1,
     blockGasLimit: 12000000,
 
-    // 减少日志输出
-    ...(process.env.CI === "true" && {
-      loggingEnabled: false,
-      accounts: {
-        count: 10, // 减少账户数量
-        accountsBalance: "10000000000000000000000"
-      }
-    }),
-
-    // 在本地保持详细日志
-    ...(!process.env.CI && {
-      loggingEnabled: true,
-      accounts: {
-        count: 20,
-        accountsBalance: "10000000000000000000000"
-      }
-    })
+    // 只有DEBUG=true时启用详细日志，账户数量保证足够使用
+    loggingEnabled: process.env.DEBUG === "true",
+    accounts: {
+      count: process.env.DEBUG === "true" ? 20 : 15, // 确保足够的账户数量
+      accountsBalance: "10000000000000000000000",
+    },
   },
 
   localhost: {
@@ -111,7 +95,7 @@ const networks = {
     chainId: 31337,
     gas: 12000000,
     gasPrice: 20000000000,
-    timeout: 60000
+    timeout: 60000,
   },
 
   // Ethereum networks
@@ -188,19 +172,19 @@ module.exports = {
           yul: true,
           yulDetails: {
             stackAllocation: true,
-            optimizerSteps: "dhfoDgvulfnTUtnIf"
-          }
-        }
+            optimizerSteps: "dhfoDgvulfnTUtnIf",
+          },
+        },
       },
 
       // 在CI环境中减少编译输出
       ...(process.env.CI === "true" && {
         outputSelection: {
           "*": {
-            "*": ["abi", "evm.bytecode", "evm.methodIdentifiers"]
-          }
-        }
-      })
+            "*": ["abi", "evm.bytecode", "evm.methodIdentifiers"],
+          },
+        },
+      }),
     },
   },
 
@@ -268,7 +252,7 @@ module.exports = {
     reporterOptions: process.env.MOCHA_REPORTER_OPTIONS
       ? JSON.parse(process.env.MOCHA_REPORTER_OPTIONS)
       : {},
-    grep: process.env.TEST_GREP || undefined
+    grep: process.env.TEST_GREP || undefined,
   },
 
   // TypeChain配置
