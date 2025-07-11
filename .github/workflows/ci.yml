@@ -171,7 +171,8 @@ jobs:
       - name: Generate gas report
         run: |
           cd contracts
-          REPORT_GAS=true npx hardhat test > gas-report.txt
+          # 使用npm脚本生成清洁的gas报告
+          npm run gas:report
 
       - name: Comment gas report on PR
         if: github.event_name == 'pull_request'
@@ -191,11 +192,25 @@ jobs:
                 return;
               }
 
-              const gasReport = fs.readFileSync(gasReportPath, 'utf8');
+              let gasReport = fs.readFileSync(gasReportPath, 'utf8');
 
               // 检查报告是否为空
               if (!gasReport.trim()) {
                 console.log('Gas report is empty, skipping comment');
+                return;
+              }
+
+              // 进一步清理可能残留的特殊字符
+              gasReport = gasReport
+                .replace(/\x1b\[[0-9;]*m/g, '') // 清理ANSI颜色代码
+                .replace(/\u001b\[[0-9;]*m/g, '') // 清理Unicode转义序列
+                .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // 清理控制字符
+                .replace(/\[\d+m/g, '') // 清理其他颜色代码
+                .trim();
+
+              // 如果清理后为空，跳过
+              if (!gasReport) {
+                console.log('Gas report is empty after cleaning, skipping comment');
                 return;
               }
 
