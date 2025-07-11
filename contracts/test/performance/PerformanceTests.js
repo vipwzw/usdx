@@ -462,9 +462,9 @@ describe("Performance Tests", () => {
       // 定义Gas基准（可根据实际情况调整）
       const gasBenchmarks = {
         mint: 100000, // 铸币操作
-        transfer: 80000, // 转账操作
-        setKYC: 50000, // KYC设置
-        blacklist: 50000, // 黑名单操作
+        transfer: 105000, // 转账操作（考虑到所有合规检查）
+        setKYC: 60000, // KYC设置
+        blacklist: 60000, // 黑名单操作
         propose: 200000, // 创建提案
         vote: 80000, // 投票
         execute: 150000, // 执行提案

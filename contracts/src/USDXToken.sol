@@ -677,22 +677,6 @@ contract USDXToken is
             return true;
         }
 
-        // Example 3: Transfers involving multiple restricted factors
-        if (_sanctioned[from] && _blacklisted[to]) {
-            return true; // This would be caught earlier, but shows the concept
-        }
-
-        // Example 4: Region-based compliance violation
-        if (
-            _regionCode[from] != 0 &&
-            _regionCode[to] != 0 &&
-            _regionCode[from] != _regionCode[to] &&
-            _regionRestrictionsEnabled
-        ) {
-            // Different regions interacting might be a compliance issue
-            return false; // This is already handled by region restrictions
-        }
-
         return false;
     }
 

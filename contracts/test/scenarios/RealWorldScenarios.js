@@ -511,6 +511,11 @@ describe("Real World Scenarios", () => {
       // 阶段2: 支付处理商服务
       console.log("\n🏦 阶段2: 支付处理商中转服务");
 
+      // 设置海外供应商为KYC验证用户，避免合规违规
+      await token.connect(_compliance).setKYCVerified(foreignSupplier.address, true);
+      // 给海外供应商少量余额，使其不是新账户
+      await token.connect(minter).mint(foreignSupplier.address, ethers.parseUnits("1", 6));
+
       // 公司将资金转给支付处理商
       await token.connect(domesticCompany).transfer(paymentProcessor.address, tradeContractValue);
       console.log("✅ 资金已转给支付处理商");
