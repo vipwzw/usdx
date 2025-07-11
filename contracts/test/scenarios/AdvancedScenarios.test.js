@@ -194,6 +194,10 @@ describe("Advanced Real-World Scenarios", () => {
 
       console.log("🗺️ 阶段1: 地区和机构设置");
 
+      // 重置可能的全局限制状态
+      await token.connect(compliance).setTransferAuthorizationRequired(false);
+      await token.connect(compliance).setRecipientValidationRequired(false);
+
       // 设置地区代码
       await token.connect(compliance).setRegionRestrictionsEnabled(true);
       await token.connect(compliance).setRegionCode(domesticBank.address, 1); // 美国
@@ -212,8 +216,11 @@ describe("Advanced Real-World Scenarios", () => {
 
       await token.connect(compliance).setAuthorizedSender(domesticBank.address, true);
       await token.connect(compliance).setAuthorizedSender(exchangeService.address, true);
+      await token.connect(compliance).setAuthorizedSender(domesticCustomer.address, true);
       await token.connect(compliance).setValidRecipient(foreignBank.address, true);
       await token.connect(compliance).setValidRecipient(domesticCustomer.address, true);
+      await token.connect(compliance).setValidRecipient(domesticBank.address, true);
+      await token.connect(compliance).setValidRecipient(exchangeService.address, true);
 
       // KYC验证
       const entities = [
@@ -400,6 +407,11 @@ describe("Advanced Real-World Scenarios", () => {
       await token.connect(compliance).setKYCVerified(shadowBank.address, true);
       await token.connect(minter).mint(shadowBank.address, ethers.parseUnits("200000000", 6));
 
+      // 为大额交易临时提高转账限制
+      await token
+        .connect(compliance)
+        .setTransferLimits(ethers.parseUnits("500000000", 6), ethers.parseUnits("1", 6));
+
       // 影子银行开始大量抛售（模拟市场恐慌）
       const panicSellAmount = ethers.parseUnits("150000000", 6);
       await token.connect(shadowBank).transfer(systemicBank1.address, panicSellAmount);
@@ -409,13 +421,13 @@ describe("Advanced Real-World Scenarios", () => {
       await token.connect(pauser).pause();
       console.log("⏸️ 系统紧急暂停，防止恐慌性抛售");
 
-      // 通过治理机制实施救助措施
-      const rescueAmount = ethers.parseUnits("100000000", 6);
-      await token.connect(minter).mint(systemicBank2.address, rescueAmount);
-
       console.log("💉 阶段4: 流动性注入");
       // 恢复系统运行
       await token.connect(pauser).unpause();
+
+      // 通过治理机制实施救助措施（系统恢复后）
+      const rescueAmount = ethers.parseUnits("100000000", 6);
+      await token.connect(minter).mint(systemicBank2.address, rescueAmount);
 
       // 系统性银行相互支援
       const supportAmount = ethers.parseUnits("50000000", 6);

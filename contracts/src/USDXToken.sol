@@ -755,14 +755,24 @@ contract USDXToken is
      * @param amount Transfer amount
      */
     function _updateHolderCount(address from, address to, uint256 amount) internal {
-        // Check if recipient becomes a new holder
-        if (to != address(0) && balanceOf(to) == amount && from != address(0)) {
+        // For minting (from == address(0)), only check if recipient becomes new holder
+        if (from == address(0) && to != address(0) && balanceOf(to) == 0) {
             _currentHolderCount++;
         }
-
-        // Check if sender is no longer a holder
-        if (from != address(0) && balanceOf(from) == 0 && to != address(0)) {
+        // For burning (to == address(0)), only check if sender loses all tokens
+        else if (to == address(0) && from != address(0) && balanceOf(from) == amount) {
             _currentHolderCount--;
+        }
+        // For regular transfers
+        else if (from != address(0) && to != address(0)) {
+            // Check if recipient becomes a new holder (balance was 0 before transfer)
+            if (balanceOf(to) == 0) {
+                _currentHolderCount++;
+            }
+            // Check if sender will no longer be a holder (balance will be 0 after transfer)
+            if (balanceOf(from) == amount) {
+                _currentHolderCount--;
+            }
         }
     }
 

@@ -528,12 +528,12 @@ contract USDXGovernance is
             return "Active";
         }
 
-        if (proposal.forVotes < requiredVotes) {
-            return "Failed";
-        }
-
         if (proposal.forVotes <= proposal.againstVotes) {
             return "Defeated";
+        }
+
+        if (proposal.forVotes < requiredVotes) {
+            return "Failed";
         }
 
         if (block.timestamp < proposal.votingDeadline + executionDelay) {
