@@ -30,13 +30,19 @@ describe("Performance Tests", () => {
         // 如果tx有hash但没有wait方法，手动获取receipt
         receipt = await ethers.provider.waitForTransaction(tx.hash);
       } else {
-        throw new Error(`Invalid transaction object: ${JSON.stringify(tx)}`);
+        // 避免BigInt序列化问题，只显示关键信息
+        const txInfo = {
+          hash: tx.hash || "undefined",
+          type: typeof tx,
+          hasWait: typeof tx.wait === "function",
+        };
+        throw new Error(`Invalid transaction object: ${JSON.stringify(txInfo)}`);
       }
 
       const endTime = Date.now();
 
-      const gasUsed = receipt.gasUsed;
-      const gasPrice = tx.gasPrice || (await ethers.provider.getGasPrice());
+      const gasUsed = BigInt(receipt.gasUsed || 0);
+      const gasPrice = BigInt(tx.gasPrice || (await ethers.provider.getGasPrice()) || 0);
       const gasCost = gasUsed * gasPrice;
 
       const operation = {
@@ -45,7 +51,7 @@ describe("Performance Tests", () => {
         gasPrice: gasPrice.toString(),
         gasCost: gasCost.toString(),
         duration: endTime - startTime,
-        blockNumber: Number(receipt.blockNumber),
+        blockNumber: Number(receipt.blockNumber || 0),
       };
 
       this.operations.push(operation);
@@ -266,12 +272,21 @@ describe("Performance Tests", () => {
         addresses.push(TestHelpers.generateRandomAddress());
       }
 
-      // 批量合规检查
+      // 批量合规检查（view函数，无需Gas跟踪）
+      const restrictionResults = [];
       for (let i = 0; i < addresses.length; i++) {
-        await gasTracker.track(
-          `合规检查-${i + 1}`,
-          token.detectTransferRestriction(testBase.accounts.user1.address, addresses[i], amount),
+        const startTime = Date.now();
+        const restriction = await token.detectTransferRestriction(
+          testBase.accounts.user1.address,
+          addresses[i],
+          amount,
         );
+        const endTime = Date.now();
+        restrictionResults.push({ restriction, duration: endTime - startTime });
+
+        if (i % 10 === 0) {
+          console.log(`🔍 合规检查进度: ${i + 1}/${addresses.length}`);
+        }
       }
 
       // 设置部分地址为KYC验证状态
@@ -283,13 +298,34 @@ describe("Performance Tests", () => {
         );
       }
 
-      // 再次进行合规检查，验证性能差异
+      // 再次进行合规检查，验证性能差异（view函数，无需Gas跟踪）
+      const kycResults = [];
       for (let i = 0; i < kycCount; i++) {
-        await gasTracker.track(
-          `KYC后检查-${i + 1}`,
-          token.detectTransferRestriction(testBase.accounts.user1.address, addresses[i], amount),
+        const startTime = Date.now();
+        const restriction = await token.detectTransferRestriction(
+          testBase.accounts.user1.address,
+          addresses[i],
+          amount,
         );
+        const endTime = Date.now();
+        kycResults.push({ restriction, duration: endTime - startTime });
       }
+
+      // 统计合规检查性能
+      const avgTimeBeforeKYC =
+        restrictionResults.slice(0, kycCount).reduce((sum, r) => sum + r.duration, 0) / kycCount;
+      const avgTimeAfterKYC =
+        kycResults.reduce((sum, r) => sum + r.duration, 0) / kycResults.length;
+
+      console.log(`✅ KYC前平均检查时间: ${avgTimeBeforeKYC.toFixed(2)}ms`);
+      console.log(`✅ KYC后平均检查时间: ${avgTimeAfterKYC.toFixed(2)}ms`);
+      console.log(
+        `✅ 性能改善: ${(((avgTimeBeforeKYC - avgTimeAfterKYC) / avgTimeBeforeKYC) * 100).toFixed(2)}%`,
+      );
+
+      // 验证KYC后检查结果更优
+      const kycPassCount = kycResults.filter(r => r.restriction === BigInt(0)).length;
+      expect(kycPassCount).to.be.greaterThan(0);
     });
 
     it("应该高效处理黑名单批量操作", async () => {
