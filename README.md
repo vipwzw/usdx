@@ -125,6 +125,10 @@ scripts\setup-code-navigation.bat
 
 详细配置指南: [docs/SOLIDITY_CODE_NAVIGATION.md](docs/SOLIDITY_CODE_NAVIGATION.md)
 
+### 📋 技术文档
+- **[分支保护配置](docs/BRANCH_PROTECTION_GUIDE.md)** - GitHub分支保护规则设置
+- **[GitHub Actions权限配置](docs/GITHUB_ACTIONS_PERMISSIONS.md)** - CI/CD权限配置指南
+
 ### 测试覆盖率
 
 ```bash
