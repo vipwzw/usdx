@@ -34,7 +34,7 @@ echo "   - Name: $REPO_NAME"
 # 设置分支保护规则
 echo "🔧 正在设置分支保护规则..."
 
-# 主要设置
+# 主要设置 - 注意 enforce_admins 设置为 false，允许管理员绕过所有限制
 gh api \
   --method PUT \
   -H "Accept: application/vnd.github+json" \
@@ -56,7 +56,12 @@ gh api \
       "dismiss_stale_reviews": true,
       "require_code_owner_reviews": true,
       "required_approving_review_count": 1,
-      "require_last_push_approval": false
+      "require_last_push_approval": false,
+      "bypass_pull_request_allowances": {
+        "users": [],
+        "teams": [],
+        "apps": []
+      }
     },
     "restrictions": null,
     "required_linear_history": false,
@@ -81,6 +86,7 @@ gh api \
     "require_pr_reviews": .required_pull_request_reviews.required_approving_review_count,
     "dismiss_stale_reviews": .required_pull_request_reviews.dismiss_stale_reviews,
     "require_code_owner_reviews": .required_pull_request_reviews.require_code_owner_reviews,
+    "enforce_admins": .enforce_admins,
     "conversation_resolution": .required_conversation_resolution,
     "linear_history": .required_linear_history,
     "force_push": .allow_force_pushes,
@@ -98,5 +104,10 @@ echo "   ✅ 关闭过时的审查"
 echo "   ✅ 需要解决所有对话"
 echo "   ❌ 禁止强制推送"
 echo "   ❌ 禁止删除分支"
+echo ""
+echo "👑 管理员权限:"
+echo "   ✅ 管理员可以绕过所有保护规则直接合并"
+echo "   ✅ 管理员不受PR审查要求限制"
+echo "   ✅ 管理员不受状态检查要求限制"
 echo ""
 echo "🔗 查看保护规则: https://github.com/$REPO_OWNER/$REPO_NAME/settings/branches"
