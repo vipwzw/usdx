@@ -604,6 +604,111 @@ describe("USDXToken", () => {
     });
   });
 
+  describe("Compliance Configuration", () => {
+    it("Should allow setting compliance config by compliance role", async () => {
+      // Test setting all parameters to true
+      await usdxToken.setComplianceConfig(true, true, true);
+
+      expect(await usdxToken.isKYCRequired()).to.be.true;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.true;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.true;
+    });
+
+    it("Should allow setting compliance config with mixed parameters", async () => {
+      // Test setting KYC false, whitelist true, region restrictions false
+      await usdxToken.setComplianceConfig(false, true, false);
+
+      expect(await usdxToken.isKYCRequired()).to.be.false;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.true;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.false;
+    });
+
+    it("Should allow setting all compliance config to false", async () => {
+      // Test setting all parameters to false
+      await usdxToken.setComplianceConfig(false, false, false);
+
+      expect(await usdxToken.isKYCRequired()).to.be.false;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.false;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.false;
+    });
+
+    it("Should emit ComplianceConfigUpdated event", async () => {
+      await expect(usdxToken.setComplianceConfig(true, false, true))
+        .to.emit(usdxToken, "ComplianceConfigUpdated")
+        .withArgs(true, false, true);
+    });
+
+    it("Should emit ComplianceConfigUpdated event with all false", async () => {
+      await expect(usdxToken.setComplianceConfig(false, false, false))
+        .to.emit(usdxToken, "ComplianceConfigUpdated")
+        .withArgs(false, false, false);
+    });
+
+    it("Should not allow setting compliance config by non-compliance role", async () => {
+      await expect(usdxToken.connect(addr1).setComplianceConfig(true, true, true)).to.be.reverted;
+    });
+
+    it("Should not allow setting compliance config by minter role", async () => {
+      // Grant minter role but not compliance role
+      await usdxToken.grantRole(await usdxToken.MINTER_ROLE(), addr1.address);
+
+      await expect(usdxToken.connect(addr1).setComplianceConfig(true, true, true)).to.be.reverted;
+    });
+
+    it("Should allow compliance role to update individual settings", async () => {
+      // Start with initial state
+      await usdxToken.setComplianceConfig(true, true, false);
+
+      // Update only KYC requirement
+      await usdxToken.setComplianceConfig(false, true, false);
+      expect(await usdxToken.isKYCRequired()).to.be.false;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.true;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.false;
+
+      // Update only whitelist setting
+      await usdxToken.setComplianceConfig(false, false, false);
+      expect(await usdxToken.isKYCRequired()).to.be.false;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.false;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.false;
+
+      // Update only region restrictions
+      await usdxToken.setComplianceConfig(false, false, true);
+      expect(await usdxToken.isKYCRequired()).to.be.false;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.false;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.true;
+    });
+
+    it("Should persist compliance config changes", async () => {
+      // Set initial config
+      await usdxToken.setComplianceConfig(true, false, true);
+
+      // Verify config is set
+      expect(await usdxToken.isKYCRequired()).to.be.true;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.false;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.true;
+
+      // Change config
+      await usdxToken.setComplianceConfig(false, true, false);
+
+      // Verify config has changed
+      expect(await usdxToken.isKYCRequired()).to.be.false;
+      expect(await usdxToken.isWhitelistEnabled()).to.be.true;
+      expect(await usdxToken.isRegionRestrictionsEnabled()).to.be.false;
+    });
+
+    it("Should emit multiple events for multiple config changes", async () => {
+      // First change
+      await expect(usdxToken.setComplianceConfig(true, true, false))
+        .to.emit(usdxToken, "ComplianceConfigUpdated")
+        .withArgs(true, true, false);
+
+      // Second change
+      await expect(usdxToken.setComplianceConfig(false, true, true))
+        .to.emit(usdxToken, "ComplianceConfigUpdated")
+        .withArgs(false, true, true);
+    });
+  });
+
   describe("View Functions", () => {
     it("Should return correct transfer limits", async () => {
       expect(await usdxToken.getMaxTransferAmount()).to.equal(ethers.parseUnits("1000000", 6));
