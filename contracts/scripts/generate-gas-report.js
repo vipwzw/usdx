@@ -13,7 +13,7 @@ const CONSTANTS = {
   ERROR_OUTPUT_SLICE: 500,
 };
 
-const TEST_FILES = ["test/USDXToken.test.js", "test/USDXGovernance.test.js"];
+const TEST_FILES = ["test/unit/USDXToken.test.js", "test/unit/USDXGovernance.test.js"];
 
 const EXCLUDE_PATTERNS = [
   "eth_accounts",

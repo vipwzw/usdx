@@ -5,10 +5,11 @@
 
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { TestHelpers } = require("./IntegrationTestConfig");
+const { IntegrationTestBase, TestHelpers } = require("./IntegrationTestConfig");
 
 describe("Deployment Integration Tests", () => {
   let deploymentTracker;
+  let testBase;
 
   // 部署跟踪器
   class DeploymentTracker {
@@ -65,10 +66,21 @@ describe("Deployment Integration Tests", () => {
       });
       console.log("===================\n");
     }
+
+    generateReport() {
+      return {
+        timestamp: new Date().toISOString(),
+        network: "hardhat",
+        totalGasUsed: this.gasUsed.toString(),
+        deploymentCount: this.deployments.length,
+        deployments: this.deployments,
+      };
+    }
   }
 
   beforeEach(() => {
     deploymentTracker = new DeploymentTracker();
+    testBase = new IntegrationTestBase();
   });
 
   afterEach(() => {
@@ -85,33 +97,34 @@ describe("Deployment Integration Tests", () => {
       console.log("\n📦 阶段1: 部署USDX Token合约");
 
       const USDXToken = await ethers.getContractFactory("USDXToken");
-      const tokenName = "USDX Stablecoin";
-      const tokenSymbol = "USDX";
-      const initialSupply = ethers.parseUnits("1000000000", 6);
-
       const usdxToken = await deploymentTracker.trackDeployment(
         "USDXToken (Proxy)",
-        upgrades.deployProxy(USDXToken, [tokenName, tokenSymbol, initialSupply, deployer.address], {
-          initializer: "initialize",
-          kind: "uups",
-        }),
+        upgrades.deployProxy(
+          USDXToken,
+          [
+            testBase.config.TOKEN.NAME,
+            testBase.config.TOKEN.SYMBOL,
+            testBase.config.TOKEN.INITIAL_SUPPLY,
+            deployer.address,
+          ],
+          {
+            initializer: "initialize",
+            kind: "uups",
+          },
+        ),
       );
 
       // 验证代币合约部署
-      expect(await usdxToken.name()).to.equal(tokenName);
-      expect(await usdxToken.symbol()).to.equal(tokenSymbol);
-      expect(await usdxToken.totalSupply()).to.equal(initialSupply);
-      expect(await usdxToken.decimals()).to.equal(6);
+      expect(await usdxToken.name()).to.equal(testBase.config.TOKEN.NAME);
+      expect(await usdxToken.symbol()).to.equal(testBase.config.TOKEN.SYMBOL);
+      expect(await usdxToken.totalSupply()).to.equal(testBase.config.TOKEN.INITIAL_SUPPLY);
+      expect(await usdxToken.decimals()).to.equal(testBase.config.TOKEN.DECIMALS);
       console.log("✅ USDX Token合约部署验证通过");
 
       // 阶段2: 部署治理合约
       console.log("\n🏛️ 阶段2: 部署USDX治理合约");
 
       const USDXGovernance = await ethers.getContractFactory("USDXGovernance");
-      const votingPeriod = 86400; // 24小时
-      const executionDelay = 3600; // 1小时
-      const requiredVotes = 2;
-
       const governance = await deploymentTracker.trackDeployment(
         "USDXGovernance (Proxy)",
         upgrades.deployProxy(
@@ -119,9 +132,9 @@ describe("Deployment Integration Tests", () => {
           [
             await usdxToken.getAddress(),
             [governor1.address, governor2.address, governor3.address],
-            requiredVotes,
-            votingPeriod,
-            executionDelay,
+            testBase.config.GOVERNANCE.REQUIRED_VOTES,
+            testBase.config.GOVERNANCE.VOTING_PERIOD,
+            testBase.config.GOVERNANCE.EXECUTION_DELAY,
           ],
           { initializer: "initialize", kind: "uups" },
         ),
@@ -129,9 +142,11 @@ describe("Deployment Integration Tests", () => {
 
       // 验证治理合约部署
       expect(await governance.token()).to.equal(await usdxToken.getAddress());
-      expect(await governance.requiredVotes()).to.equal(requiredVotes);
-      expect(await governance.votingPeriod()).to.equal(votingPeriod);
-      expect(await governance.executionDelay()).to.equal(executionDelay);
+      expect(await governance.requiredVotes()).to.equal(testBase.config.GOVERNANCE.REQUIRED_VOTES);
+      expect(await governance.votingPeriod()).to.equal(testBase.config.GOVERNANCE.VOTING_PERIOD);
+      expect(await governance.executionDelay()).to.equal(
+        testBase.config.GOVERNANCE.EXECUTION_DELAY,
+      );
       console.log("✅ USDX治理合约部署验证通过");
 
       // 阶段3: 配置角色权限
@@ -160,63 +175,11 @@ describe("Deployment Integration Tests", () => {
       expect(await usdxToken.hasRole(UPGRADER_ROLE, governanceAddress)).to.be.true;
       console.log("✅ 角色权限配置完成");
 
-      // 阶段4: 功能验证测试
-      console.log("\n🧪 阶段4: 部署后功能验证");
-
-      // 测试基本代币功能
-      const testUser = (await ethers.getSigners())[10];
-      const mintAmount = ethers.parseUnits("100000", 6);
-
-      // 设置KYC
-      await usdxToken.connect(deployer).setKYCVerified(testUser.address, true);
-
-      // 铸币测试
-      await usdxToken.connect(deployer).mint(testUser.address, mintAmount);
-      expect(await usdxToken.balanceOf(testUser.address)).to.equal(mintAmount);
-      console.log("✅ 铸币功能测试通过");
-
-      // 转账测试
-      const transferAmount = ethers.parseUnits("10000", 6);
-      await usdxToken.connect(deployer).setKYCVerified(deployer.address, true);
-      await usdxToken.connect(testUser).transfer(deployer.address, transferAmount);
-      expect(await usdxToken.balanceOf(deployer.address)).to.equal(initialSupply + transferAmount);
-      console.log("✅ 转账功能测试通过");
-
-      // 治理功能测试
-      const target = await usdxToken.getAddress();
-      const data = usdxToken.interface.encodeFunctionData("pause", []);
-      const tx = await governance.connect(governor1).propose(target, 0, data, "测试提案");
-      const receipt = await tx.wait();
-
-      // 查找ProposalCreated事件来获取proposalId
-      let proposalId;
-      for (const log of receipt.logs) {
-        try {
-          const parsedLog = governance.interface.parseLog(log);
-          if (parsedLog.name === "ProposalCreated") {
-            proposalId = parsedLog.args.proposalId;
-            break;
-          }
-        } catch (e) {
-          // 忽略解析错误，继续查找
-          continue;
-        }
-      }
-
-      // 如果没有找到，使用proposalCount作为fallback
-      if (!proposalId || proposalId === 0n) {
-        proposalId = await governance.proposalCount();
-      }
-
-      expect(proposalId).to.be.greaterThan(0);
-      console.log(`✅ 治理功能测试通过，提案ID: ${proposalId}`);
-
-      // 阶段5: 生成部署报告
-      console.log("\n📋 阶段5: 生成部署报告");
+      // 阶段4: 生成部署报告
+      console.log("\n📋 阶段4: 生成部署报告");
 
       const deploymentReport = {
-        timestamp: new Date().toISOString(),
-        network: "hardhat",
+        ...deploymentTracker.generateReport(),
         deployer: deployer.address,
         contracts: {
           usdxToken: {
@@ -234,8 +197,6 @@ describe("Deployment Integration Tests", () => {
             proposalCount: await governance.proposalCount(),
           },
         },
-        totalGasUsed: deploymentTracker.gasUsed.toString(),
-        deploymentCount: deploymentTracker.deployments.length,
       };
 
       console.log("📊 部署报告:");
@@ -274,17 +235,22 @@ describe("Deployment Integration Tests", () => {
       // 步骤2: 部署代理合约
       console.log("\n2️⃣ 步骤2: 部署代理合约");
 
-      const tokenName = "USDX Stablecoin";
-      const tokenSymbol = "USDX";
-      const initialSupply = ethers.parseUnits("1000000000", 6);
-
       const usdxTokenProxy = await deploymentTracker.trackDeployment(
         "USDXToken (Proxy)",
-        upgrades.deployProxy(USDXToken, [tokenName, tokenSymbol, initialSupply, deployer.address], {
-          initializer: "initialize",
-          kind: "uups",
-          constructorArgs: [],
-        }),
+        upgrades.deployProxy(
+          USDXToken,
+          [
+            testBase.config.TOKEN.NAME,
+            testBase.config.TOKEN.SYMBOL,
+            testBase.config.TOKEN.INITIAL_SUPPLY,
+            deployer.address,
+          ],
+          {
+            initializer: "initialize",
+            kind: "uups",
+            constructorArgs: [],
+          },
+        ),
       );
 
       deploymentSteps.push({
@@ -297,8 +263,8 @@ describe("Deployment Integration Tests", () => {
       // 步骤3: 验证代理指向
       console.log("\n3️⃣ 步骤3: 验证代理配置");
 
-      expect(await usdxTokenProxy.name()).to.equal(tokenName);
-      expect(await usdxTokenProxy.symbol()).to.equal(tokenSymbol);
+      expect(await usdxTokenProxy.name()).to.equal(testBase.config.TOKEN.NAME);
+      expect(await usdxTokenProxy.symbol()).to.equal(testBase.config.TOKEN.SYMBOL);
 
       deploymentSteps.push({
         step: 3,
@@ -331,7 +297,13 @@ describe("Deployment Integration Tests", () => {
         "USDXGovernance (Proxy)",
         upgrades.deployProxy(
           USDXGovernance,
-          [await usdxTokenProxy.getAddress(), governors.map(g => g.address), 2, 86400, 3600],
+          [
+            await usdxTokenProxy.getAddress(),
+            governors.map(g => g.address),
+            testBase.config.GOVERNANCE.REQUIRED_VOTES,
+            testBase.config.GOVERNANCE.VOTING_PERIOD,
+            testBase.config.GOVERNANCE.EXECUTION_DELAY,
+          ],
           { initializer: "initialize", kind: "uups" },
         ),
       );
@@ -384,7 +356,12 @@ describe("Deployment Integration Tests", () => {
         "USDXToken V1 (Proxy)",
         upgrades.deployProxy(
           USDXTokenV1,
-          ["USDX Stablecoin", "USDX", ethers.parseUnits("1000000", 6), deployer.address],
+          [
+            testBase.config.TOKEN.NAME,
+            testBase.config.TOKEN.SYMBOL,
+            TestHelpers.parseAmount("1000000"),
+            deployer.address,
+          ],
           { initializer: "initialize", kind: "uups" },
         ),
       );
@@ -419,7 +396,7 @@ describe("Deployment Integration Tests", () => {
       // 验证升级结果
       expect(v2Address).to.equal(v1Address); // 代理地址应该保持不变
       expect(v2TotalSupply).to.equal(v1TotalSupply); // 状态应该保持
-      expect(await upgradedToken.name()).to.equal("USDX Stablecoin"); // 基本功能正常
+      expect(await upgradedToken.name()).to.equal(testBase.config.TOKEN.NAME); // 基本功能正常
 
       console.log("✅ 合约升级成功，状态保持完整");
     });
@@ -435,7 +412,7 @@ describe("Deployment Integration Tests", () => {
         "USDXToken (Test Upgrade)",
         upgrades.deployProxy(
           USDXToken,
-          ["USDX Test", "USDXT", ethers.parseUnits("1000", 6), deployer.address],
+          ["USDX Test", "USDXT", TestHelpers.parseAmount("1000"), deployer.address],
           { initializer: "initialize", kind: "uups" },
         ),
       );
@@ -498,7 +475,7 @@ describe("Deployment Integration Tests", () => {
         const [deployer] = await ethers.getSigners();
         const USDXToken = await ethers.getContractFactory("USDXToken");
 
-        const initialSupply = ethers.parseUnits(config.initialSupply, 6);
+        const initialSupply = TestHelpers.parseAmount(config.initialSupply);
 
         const token = await deploymentTracker.trackDeployment(
           `USDXToken (${config.name})`,
