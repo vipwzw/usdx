@@ -170,7 +170,7 @@ function burnFrom(address from, uint256 amount) external
 | 权限管理 | ✅ | OpenZeppelin AccessControl |
 | 暂停机制 | ✅ | 紧急情况响应 |
 | 升级安全 | ✅ | 治理控制的UUPS |
-| 测试覆盖 | ✅ | 106个测试用例 |
+| 测试覆盖 | ✅ | 261个测试用例 |
 
 ---
 
