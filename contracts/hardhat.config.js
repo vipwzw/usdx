@@ -48,6 +48,114 @@ const getCompilerSettings = (version, runs = 200) => ({
   },
 });
 
+// Gas Reporter 配置优化
+const gasReporterConfig = {
+  enabled: process.env.REPORT_GAS === "true",
+  currency: "USD",
+  gasPrice: 20, // gwei
+  coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+
+  // 优化输出格式，减少冗余信息
+  outputFile: process.env.GAS_REPORT_FILE || undefined,
+  noColors: process.env.NO_COLOR === "1" || process.env.CI === "true",
+  rst: false,
+  rstTitle: "Gas Usage Report",
+
+  // 只包含重要的合约和方法
+  excludeContracts: ["Mock", "Test", "Debug", "Example"],
+
+  // 在CI环境中简化输出
+  ...(process.env.CI === "true" && {
+    showTimeSpent: false,
+    showMethodSig: false,
+    maxMethodDiff: 0,
+    maxDeploymentDiff: 0,
+  }),
+};
+
+// 优化网络配置，减少日志输出
+const networks = {
+  hardhat: {
+    chainId: 31337,
+    gas: 12000000,
+    gasPrice: 20000000000,
+    gasMultiplier: 1,
+    blockGasLimit: 12000000,
+
+    // 只有DEBUG=true时启用详细日志，账户数量保证足够使用
+    loggingEnabled: process.env.DEBUG === "true",
+    accounts: {
+      count: process.env.DEBUG === "true" ? 20 : 15, // 确保足够的账户数量
+      accountsBalance: "10000000000000000000000",
+    },
+  },
+
+  localhost: {
+    url: "http://127.0.0.1:8545",
+    chainId: 31337,
+    gas: 12000000,
+    gasPrice: 20000000000,
+    timeout: 60000,
+  },
+
+  // Ethereum networks
+  goerli: {
+    url: `https://goerli.infura.io/v3/${INFURA_API_KEY}`,
+    accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    chainId: 5,
+    gasPrice: "auto",
+    gasMultiplier: 1.2,
+    timeout: 60000,
+    confirmations: 2,
+  },
+
+  sepolia: {
+    url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
+    accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    chainId: 11155111,
+    gasPrice: "auto",
+    gasMultiplier: 1.2,
+    timeout: 60000,
+    confirmations: 2,
+  },
+
+  mainnet: {
+    url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+    accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    chainId: 1,
+    gasPrice: "auto",
+    gasMultiplier: 1.1,
+    timeout: 120000,
+    confirmations: 3,
+  },
+
+  // Layer 2 networks
+  polygon: {
+    url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+    accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    chainId: 137,
+    gasPrice: "auto",
+    gasMultiplier: 1.2,
+    timeout: 60000,
+  },
+
+  arbitrum: {
+    url: "https://arb1.arbitrum.io/rpc",
+    accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    chainId: 42161,
+    gasPrice: "auto",
+    timeout: 60000,
+  },
+
+  optimism: {
+    url: "https://mainnet.optimism.io",
+    accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    chainId: 10,
+    gasPrice: "auto",
+    timeout: 60000,
+  },
+};
+
 module.exports = {
   solidity: {
     compilers: [
@@ -57,7 +165,26 @@ module.exports = {
       getCompilerSettings("0.8.24", 200),
     ],
     settings: {
-      optimizer: getOptimizerSettings(200),
+      optimizer: {
+        enabled: true,
+        runs: process.env.OPTIMIZER_RUNS ? parseInt(process.env.OPTIMIZER_RUNS) : 1000,
+        details: {
+          yul: true,
+          yulDetails: {
+            stackAllocation: true,
+            optimizerSteps: "dhfoDgvulfnTUtnIf",
+          },
+        },
+      },
+
+      // 在CI环境中减少编译输出
+      ...(process.env.CI === "true" && {
+        outputSelection: {
+          "*": {
+            "*": ["abi", "evm.bytecode", "evm.methodIdentifiers"],
+          },
+        },
+      }),
     },
   },
 
@@ -71,103 +198,7 @@ module.exports = {
     tests: "./test",
   },
 
-  networks: {
-    // 开发网络
-    hardhat: {
-      chainId: 31337,
-      allowUnlimitedContractSize: false,
-      gas: 12000000,
-      blockGasLimit: 12000000,
-      gasPrice: 20000000000,
-      // 启用调试功能
-      loggingEnabled: true,
-      accounts: {
-        count: 20,
-        accountsBalance: "10000000000000000000000", // 10000 ETH
-      },
-      forking: process.env.FORK_URL
-        ? {
-            url: process.env.FORK_URL,
-            blockNumber: process.env.FORK_BLOCK_NUMBER
-              ? parseInt(process.env.FORK_BLOCK_NUMBER)
-              : undefined,
-          }
-        : undefined,
-      mining: {
-        auto: true,
-        interval: process.env.MINING_INTERVAL ? parseInt(process.env.MINING_INTERVAL) : 0,
-      },
-    },
-
-    localhost: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337,
-      timeout: 60000,
-      accounts: PRIVATE_KEY
-        ? [PRIVATE_KEY]
-        : [
-            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-            "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
-          ],
-    },
-
-    // Ethereum networks
-    goerli: {
-      url: `https://goerli.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 5,
-      gasPrice: "auto",
-      gasMultiplier: 1.2,
-      timeout: 60000,
-      confirmations: 2,
-    },
-
-    sepolia: {
-      url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 11155111,
-      gasPrice: "auto",
-      gasMultiplier: 1.2,
-      timeout: 60000,
-      confirmations: 2,
-    },
-
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 1,
-      gasPrice: "auto",
-      gasMultiplier: 1.1,
-      timeout: 120000,
-      confirmations: 3,
-    },
-
-    // Layer 2 networks
-    polygon: {
-      url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 137,
-      gasPrice: "auto",
-      gasMultiplier: 1.2,
-      timeout: 60000,
-    },
-
-    arbitrum: {
-      url: "https://arb1.arbitrum.io/rpc",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 42161,
-      gasPrice: "auto",
-      timeout: 60000,
-    },
-
-    optimism: {
-      url: "https://mainnet.optimism.io",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 10,
-      gasPrice: "auto",
-      timeout: 60000,
-    },
-  },
+  networks: networks,
 
   etherscan: {
     apiKey: {
@@ -187,28 +218,7 @@ module.exports = {
   },
 
   // Gas报告配置
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
-    coinmarketcap: COINMARKETCAP_API_KEY,
-    gasPriceApi: "https://api.etherscan.io/api?module=proxy&action=eth_gasPrice",
-    showTimeSpent: true,
-    showMethodSig: true,
-    maxMethodDiff: 10,
-    excludeContracts: ["Mock", "Test"],
-    src: "./src",
-    outputFile: process.env.GAS_REPORT_FILE || undefined,
-    noColors: false,
-    reportFormat: process.env.GAS_REPORT_FORMAT || "terminal",
-    forceTerminalOutput: false,
-    L1: "ethereum",
-    L2: "polygon",
-    L2Etherscan: POLYGONSCAN_API_KEY,
-    coinmarketcap: COINMARKETCAP_API_KEY,
-    rst: false,
-    rstTitle: "Gas Usage",
-    onlyCalledMethods: true,
-  },
+  gasReporter: gasReporterConfig,
 
   // 合约大小配置
   contractSizer: {
@@ -232,16 +242,17 @@ module.exports = {
 
   // Mocha测试配置
   mocha: {
-    timeout: process.env.MOCHA_TIMEOUT ? parseInt(process.env.MOCHA_TIMEOUT) : 200000,
+    timeout: process.env.CI === "true" ? 120000 : 60000, // CI环境中增加超时时间
     slow: 10000,
-    bail: process.env.BAIL_ON_FAIL === "true",
+    bail: process.env.CI === "true", // CI中遇到第一个错误就停止
     allowUncaught: false,
     parallel: process.env.PARALLEL_TESTS === "true",
     jobs: process.env.PARALLEL_JOBS ? parseInt(process.env.PARALLEL_JOBS) : 4,
-    reporter: process.env.MOCHA_REPORTER || "spec",
+    reporter: process.env.CI === "true" ? "dot" : "spec", // CI中使用简化报告器
     reporterOptions: process.env.MOCHA_REPORTER_OPTIONS
       ? JSON.parse(process.env.MOCHA_REPORTER_OPTIONS)
       : {},
+    grep: process.env.TEST_GREP || undefined,
   },
 
   // TypeChain配置
