@@ -1,4 +1,5 @@
 # USDX Stablecoin
+
 ## 企业级稳定币智能合约系统
 
 <div align="center">
@@ -30,24 +31,28 @@
 ## 📋 功能特性
 
 ### 基础功能
+
 - ✅ **ERC-20 标准兼容** - 完整的代币功能
 - ✅ **ERC-1404 合规标准** - 16种转账限制检测
 - ✅ **铸造和销毁** - 灵活的供应量管理
 - ✅ **暂停机制** - 紧急情况风险控制
 
 ### 合规特性
+
 - ✅ **KYC验证系统** - 用户身份验证
 - ✅ **黑名单管理** - 动态风险地址管理
 - ✅ **转账限制** - 单笔和日限额控制
 - ✅ **制裁检查** - 实时制裁名单筛查
 
 ### 治理功能
+
 - ✅ **多签治理** - 2/3多重签名验证
 - ✅ **提案系统** - 透明的决策流程
 - ✅ **时间锁保护** - 执行延迟安全机制
 - ✅ **权限管理** - 基于角色的访问控制
 
 ### 安全机制
+
 - ✅ **重入攻击防护** - ReentrancyGuard保护
 - ✅ **整数溢出防护** - Solidity 0.8+内置保护
 - ✅ **权限访问控制** - OpenZeppelin AccessControl
@@ -71,6 +76,7 @@
 ```
 
 ### 合约架构
+
 - **USDXToken.sol** - 主要代币合约 (ERC-20 + ERC-1404)
 - **USDXGovernance.sol** - 治理合约 (多签决策)
 - **IERC1404.sol** - ERC-1404接口定义
@@ -117,6 +123,7 @@ scripts\setup-code-navigation.bat
 ```
 
 #### 功能特性
+
 - **函数跳转**: `Ctrl+Click` 或 `F12` 跳转到定义
 - **查找引用**: `Shift+F12` 查找所有使用位置  
 - **重命名符号**: `F2` 智能重命名变量/函数
@@ -135,6 +142,7 @@ code contracts/  # 在VSCode中打开项目
 ```
 
 #### 功能特性
+
 - **函数跳转**: `Ctrl+Click` 或 `F12` 跳转到函数定义
 - **模块导入**: 智能跳转到导入的模块文件
 - **变量追踪**: 快速定位变量声明位置
@@ -144,6 +152,7 @@ code contracts/  # 在VSCode中打开项目
 详细配置指南: [docs/JAVASCRIPT_CODE_NAVIGATION.md](docs/JAVASCRIPT_CODE_NAVIGATION.md)
 
 ### 📋 技术文档
+
 - **[分支保护配置](docs/BRANCH_PROTECTION_GUIDE.md)** - GitHub分支保护规则设置
 - **[GitHub Actions权限配置](docs/GITHUB_ACTIONS_PERMISSIONS.md)** - CI/CD权限配置指南
 - **[Gas报告生成器](docs/GAS_REPORT_GUIDE.md)** - 智能合约Gas使用报告生成工具
@@ -163,6 +172,7 @@ npm run gas:analyze
 ```
 
 #### 功能特性
+
 - **自动清理乱码** - 去除ANSI控制字符
 - **智能数据提取** - 准确提取gas使用数据
 - **格式化输出** - 标准markdown表格格式
@@ -315,7 +325,7 @@ REPORT_GAS=true npx hardhat test
 
 ### 漏洞报告
 
-如发现安全漏洞，请发送邮件至：security@usdx.finance
+如发现安全漏洞，请发送邮件至：<security@usdx.finance>
 
 **请勿在GitHub Issues中公开安全漏洞**
 
@@ -323,18 +333,94 @@ REPORT_GAS=true npx hardhat test
 
 ## 📊 合规
 
-### ERC-1404 标准
+### 📋 USDX 完整转账限制代码列表
 
-USDX完整实现ERC-1404标准，支持16种转账限制检测：
+根据 `IERC1404.sol` 接口文件，USDX项目实现了**16种转账限制代码**，涵盖所有可能的合规和安全检查：
 
-| 代码 | 限制类型             | 说明           |
-| ---- | -------------------- | -------------- |
-| 0    | SUCCESS              | 允许转账       |
-| 2    | BLACKLISTED_SENDER   | 发送方被黑名单 |
-| 3    | BLACKLISTED_RECEIVER | 接收方被黑名单 |
-| 6    | INVALID_KYC_SENDER   | 发送方KYC无效  |
-| 7    | INVALID_KYC_RECEIVER | 接收方KYC无效  |
-| 8    | AMOUNT_EXCEEDS_LIMIT | 超出转账限额   |
+| 代码   | 限制类型                | 说明             | 触发条件                   |
+| ------ | ----------------------- | ---------------- | -------------------------- |
+| **0**  | `SUCCESS`               | ✅ 转账允许       | 通过所有检查               |
+| **1**  | `FAILURE`               | ❌ 一般性失败     | 未知错误或一般性问题       |
+| **2**  | `BLACKLISTED_SENDER`    | 🚫 发送方被黑名单 | 发送地址在黑名单中         |
+| **3**  | `BLACKLISTED_RECEIVER`  | 🚫 接收方被黑名单 | 接收地址在黑名单中         |
+| **4**  | `INSUFFICIENT_BALANCE`  | 💰 余额不足       | 发送方余额小于转账金额     |
+| **5**  | `PAUSED`                | ⏸️ 合约已暂停     | 合约处于暂停状态           |
+| **6**  | `INVALID_KYC_SENDER`    | 📄 发送方KYC无效  | 发送方未通过KYC验证        |
+| **7**  | `INVALID_KYC_RECEIVER`  | 📄 接收方KYC无效  | 接收方未通过KYC验证        |
+| **8**  | `AMOUNT_EXCEEDS_LIMIT`  | 📊 超出转账限额   | 转账金额超过每日或单次限额 |
+| **9**  | `SANCTIONED_ADDRESS`    | ⚖️ 地址被制裁     | 地址在国际制裁名单中       |
+| **10** | `UNAUTHORIZED_TRANSFER` | 🔒 转账未授权     | 发送方未获得转账授权       |
+| **11** | `INVALID_RECIPIENT`     | ❌ 无效接收方     | 接收方不在有效收款人名单   |
+| **12** | `TRANSFER_LOCKED`       | 🔐 转账被锁定     | 转账功能被管理员锁定       |
+| **13** | `COMPLIANCE_VIOLATION`  | ⚠️ 合规违规       | 触发合规规则违规           |
+| **14** | `EXCEEDS_HOLDER_LIMIT`  | 👥 超出持有者限制 | 超过最大持有者数量限制     |
+| **15** | `REGION_RESTRICTION`    | 🌍 地区限制       | 转账涉及受限制地区         |
+
+### 🔍 限制类别分析
+
+#### **安全控制类 (4个)**
+
+- `BLACKLISTED_SENDER` (2) - 黑名单发送方
+- `BLACKLISTED_RECEIVER` (3) - 黑名单接收方  
+- `SANCTIONED_ADDRESS` (9) - 制裁地址
+- `TRANSFER_LOCKED` (12) - 转账锁定
+
+#### **合规验证类 (4个)**
+
+- `INVALID_KYC_SENDER` (6) - 发送方KYC
+- `INVALID_KYC_RECEIVER` (7) - 接收方KYC
+- `COMPLIANCE_VIOLATION` (13) - 合规违规
+- `REGION_RESTRICTION` (15) - 地区限制
+
+#### **授权控制类 (2个)**
+
+- `UNAUTHORIZED_TRANSFER` (10) - 未授权转账
+- `INVALID_RECIPIENT` (11) - 无效收款人
+
+#### **数量限制类 (2个)**
+
+- `AMOUNT_EXCEEDS_LIMIT` (8) - 金额限制
+- `EXCEEDS_HOLDER_LIMIT` (14) - 持有者限制
+
+#### **系统状态类 (3个)**
+
+- `INSUFFICIENT_BALANCE` (4) - 余额不足
+- `PAUSED` (5) - 系统暂停
+- `FAILURE` (1) - 一般失败
+
+#### **成功状态 (1个)**
+
+- `SUCCESS` (0) - 转账成功
+
+### 🛠️ 使用示例
+
+```javascript
+// 检查转账限制
+const restrictionCode = await usdxToken.detectTransferRestriction(
+  fromAddress, 
+  toAddress, 
+  amount
+);
+
+// 获取限制消息
+const message = await usdxToken.messageForTransferRestriction(restrictionCode);
+
+// 根据限制代码处理
+switch(restrictionCode) {
+  case 0:  // SUCCESS
+    await usdxToken.transfer(toAddress, amount);
+    break;
+  case 2:  // BLACKLISTED_SENDER
+    console.log("发送方被列入黑名单");
+    break;
+  case 13: // COMPLIANCE_VIOLATION
+    console.log("触发合规违规检查");
+    break;
+  // ... 其他处理逻辑
+}
+```
+
+这套完整的限制代码系统使USDX能够满足各种监管要求，确保只有合规的转账才能执行！🎯
 
 ### 监管合规
 
@@ -373,25 +459,29 @@ USDX完整实现ERC-1404标准，支持16种转账限制检测：
 
 ## 📈 路线图
 
-### 2024 Q1 ✅
+### 2025 Q2 ✅
+
 - [x] 核心合约开发完成
 - [x] 测试覆盖率达到100%
 - [x] 技术文档完善
 - [x] CI/CD流程建立
 
-### 2024 Q2 🔄
+### 2025 Q3 🔄
+
 - [ ] 专业安全审计
 - [ ] 测试网部署和测试
 - [ ] 社区测试计划
 - [ ] 合作伙伴集成
 
-### 2024 Q3 🔮
+### 2025 Q4 🔮
+
 - [ ] 主网部署
 - [ ] 流动性启动
 - [ ] 交易所上线
 - [ ] 生态系统扩展
 
-### 2024 Q4 🔮
+### 2026 Q1 🔮
+
 - [ ] DeFi协议集成
 - [ ] 跨链桥接支持
 - [ ] 机构客户服务
@@ -407,10 +497,10 @@ USDX完整实现ERC-1404标准，支持16种转账限制检测：
 
 ## 📞 联系我们
 
-- **项目网站**: https://usdx.finance
-- **技术文档**: https://docs.usdx.finance
-- **GitHub**: https://github.com/vipwzw/usdx
-- **邮箱**: contact@usdx.finance
+- **项目网站**: <https://usdx.finance>
+- **技术文档**: <https://docs.usdx.finance>
+- **GitHub**: <https://github.com/vipwzw/usdx>
+- **邮箱**: <contact@usdx.finance>
 
 ---
 
@@ -431,141 +521,4 @@ USDX完整实现ERC-1404标准，支持16种转账限制检测：
 [![Star this repo](https://img.shields.io/github/stars/vipwzw/usdx?style=social)](https://github.com/vipwzw/usdx)
 [![Follow on GitHub](https://img.shields.io/github/followers/vipwzw?style=social)](https://github.com/vipwzw)
 
-</div> 
-
-### JavaScript调试 🔍
-
-项目提供完整的JavaScript调试环境，支持调试测试文件、部署脚本和其他JavaScript代码。
-
-#### 快速开始调试
-
-**Linux/macOS:**
-```bash
-# 启动调试环境
-./scripts/start-debug.sh
-```
-
-**Windows:**
-```cmd
-# 启动调试环境
-scripts\start-debug.bat
-```
-
-#### 可用的调试配置
-
-1. **Hardhat Test Debug** - 调试测试文件
-   - 打开测试文件（如 `test/USDXToken.test.js`）
-   - 设置断点
-   - 按 `F5` 开始调试
-
-2. **Deploy Script Debug** - 调试部署脚本
-   - 确保本地网络运行
-   - 打开脚本文件（如 `scripts/deploy.js`）
-   - 设置断点并调试
-
-3. **Debug Gas Report** - 调试Gas报告生成
-   - 直接调试 `scripts/generate-gas-report.js`
-
-4. **Debug Specific Test** - 调试特定测试用例
-   - 支持输入测试文件路径和匹配模式
-
-5. **Current Node.js File** - 调试当前文件
-   - 适用于调试任何JavaScript文件
-
-#### 调试操作
-
-| 快捷键         | 功能              |
-| -------------- | ----------------- |
-| `F5`           | 开始调试/继续执行 |
-| `Shift+F5`     | 停止调试          |
-| `F9`           | 切换断点          |
-| `F10`          | 单步执行（越过）  |
-| `F11`          | 单步执行（进入）  |
-| `Shift+F11`    | 单步执行（跳出）  |
-| `Ctrl+Shift+D` | 打开调试面板      |
-
-#### 调试示例
-
-```javascript
-// 在测试或脚本中设置断点
-const tx = await usdxToken.transfer(recipient, amount);
-console.log("Transaction:", tx); // 断点 - 查看交易对象
-const receipt = await tx.wait();
-console.log("Receipt:", receipt); // 断点 - 查看收据
-```
-
-#### 详细文档
-
-查看完整的调试指南：[JavaScript调试指南](docs/JAVASCRIPT_DEBUG_GUIDE.md)
-
-### Solidity单步调试 🔍
-
-项目提供完整的Solidity合约单步调试环境，支持交易级别的代码调试。
-
-#### 快速开始调试
-
-**获取调试交易哈希:**
-```bash
-# 运行调试演示脚本
-cd contracts
-npm run debug:solidity
-```
-
-**启动Hardhat调试器:**
-```bash
-# 使用输出的交易哈希进行调试
-npx hardhat debug <transaction_hash>
-```
-
-#### 调试器命令
-
-| 命令 | 功能 | 说明 |
-|------|------|------|
-| `n` | 下一步 | 执行下一行代码 |
-| `s` | 进入函数 | 进入函数内部调试 |
-| `o` | 跳出函数 | 跳出当前函数 |
-| `c` | 继续执行 | 继续到下一个断点 |
-| `p <变量>` | 打印变量 | 显示变量值 |
-| `st` | 堆栈跟踪 | 显示调用堆栈 |
-| `q` | 退出 | 退出调试器 |
-
-#### 可用npm调试命令
-
-```bash
-# Solidity调试演示
-npm run debug:solidity
-
-# 获取调试帮助
-npm run debug:hardhat
-
-# 带详细输出的测试
-npm run debug:console
-
-# 详细模式测试
-npm run debug:verbose
-```
-
-#### Console.log调试
-
-在Solidity合约中添加调试输出：
-
-```solidity
-import "hardhat/console.sol";
-
-function transfer(address to, uint256 amount) public override returns (bool) {
-    console.log("Transfer called");
-    console.log("From:", msg.sender);
-    console.log("To:", to);
-    console.log("Amount:", amount);
-    
-    bool result = super.transfer(to, amount);
-    console.log("Transfer result:", result);
-    return result;
-}
-```
-
-#### 详细文档
-
-查看完整的调试指南：
-- [JavaScript调试指南](docs/JAVASCRIPT_DEBUG_GUIDE.md)
-- [Solidity调试指南](docs/SOLIDITY_DEBUG_GUIDE.md) 
+</div>
