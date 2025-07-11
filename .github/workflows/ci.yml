@@ -214,12 +214,12 @@ jobs:
                 return;
               }
 
-              // 创建评论
+              // 创建评论 - 直接使用markdown格式，不包装在代码块中
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `## ⛽ Gas Usage Report\n\n\`\`\`\n${gasReport}\n\`\`\``
+                body: `## ⛽ Gas使用报告\n\n${gasReport}`
               });
 
               console.log('Gas report comment posted successfully');
