@@ -9,6 +9,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { IERC1404, RestrictionMessages } from "./interfaces/IERC1404.sol";
+import { console } from "hardhat/console.sol";
 
 /**
  * @title USDX Stablecoin Token
@@ -184,6 +185,21 @@ contract USDXToken is
         // Set admin as KYC verified before minting
         _kycVerified[admin] = true;
 
+        console.log("initialSupply", initialSupply);
+        console.log("admin", admin);
+        console.log("name", name);
+        console.log("symbol", symbol);
+        console.log("decimals", decimals());
+        console.log("maxTransferAmount", _maxTransferAmount);
+        console.log("minTransferAmount", _minTransferAmount);
+        console.log("maxHolderCount", _maxHolderCount);
+        console.log("kycRequired", _kycRequired);
+        console.log("whitelistEnabled", _whitelistEnabled);
+        console.log("regionRestrictionsEnabled", _regionRestrictionsEnabled);
+        console.log("kycVerified[admin]", _kycVerified[admin]);
+        console.log("currentHolderCount", _currentHolderCount);
+        console.log("paused", paused());
+        console.log("blacklisted[admin]", _blacklisted[admin]);
         // Mint initial supply to admin
         if (initialSupply > 0) {
             _mint(admin, initialSupply);

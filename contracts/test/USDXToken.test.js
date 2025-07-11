@@ -139,10 +139,20 @@ describe("USDXToken", () => {
       const message0 = await usdxToken.messageForTransferRestriction(0);
       const message1 = await usdxToken.messageForTransferRestriction(1);
       const message2 = await usdxToken.messageForTransferRestriction(2);
+      const message3 = await usdxToken.messageForTransferRestriction(3);
+      const message4 = await usdxToken.messageForTransferRestriction(4);
+      const message5 = await usdxToken.messageForTransferRestriction(5);
+      const message6 = await usdxToken.messageForTransferRestriction(6);
+      const message7 = await usdxToken.messageForTransferRestriction(7);
 
       expect(message0).to.equal("Transfer allowed");
       expect(message1).to.equal("Transfer failed");
       expect(message2).to.equal("Sender address is blacklisted");
+      expect(message3).to.equal("Receiver address is blacklisted");
+      expect(message4).to.equal("Insufficient balance");
+      expect(message5).to.equal("Contract is paused");
+      expect(message6).to.equal("Sender KYC not verified");
+      expect(message7).to.equal("Receiver KYC not verified");
     });
   });
 

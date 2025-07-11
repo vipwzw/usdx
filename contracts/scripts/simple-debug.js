@@ -112,8 +112,8 @@ async function main() {
     console.log("🔧 可用的调试方法:");
     console.log("");
     console.log("1. Console.log调试 (推荐):");
-    console.log('   - 在合约中导入: import "hardhat/console.sol";');
-    console.log('   - 添加日志: console.log("Debug:", variable);');
+    console.log('   - 在合约中导入: import "hardhat/console.sol";'); // eslint-disable-line quotes
+    console.log('   - 添加日志: console.log("Debug:", variable);'); // eslint-disable-line quotes
     console.log("   - 重新编译并运行脚本");
     console.log("");
     console.log("2. VSCode调试:");

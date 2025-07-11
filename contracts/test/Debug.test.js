@@ -5,12 +5,12 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const hre = require("hardhat");
 
-describe("USDX Debug Test", function () {
+describe("USDX Debug Test", () => {
   let usdxToken;
   let deployer, user1, user2;
   const decimals = 6;
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     [deployer, user1, user2] = await ethers.getSigners();
 
     console.log("🔍 调试信息:");
@@ -33,7 +33,7 @@ describe("USDX Debug Test", function () {
     console.log("  合约地址:", tokenAddress);
   });
 
-  it("应该能够调试转账流程", async function () {
+  it("应该能够调试转账流程", async () => {
     const amount = ethers.parseUnits("1000", decimals);
 
     console.log("\n📊 转账前状态:");
@@ -64,7 +64,7 @@ describe("USDX Debug Test", function () {
     expect(user1Balance).to.equal(amount);
   });
 
-  it("应该能够调试限制检查", async function () {
+  it("应该能够调试限制检查", async () => {
     const amount = ethers.parseUnits("500", decimals);
 
     console.log("\n🚫 测试转账限制...");
@@ -97,7 +97,7 @@ describe("USDX Debug Test", function () {
     console.log("  ✅ 转账被正确阻止");
   });
 
-  it("应该能够调试铸币过程", async function () {
+  it("应该能够调试铸币过程", async () => {
     const mintAmount = ethers.parseUnits("10000", decimals);
 
     console.log("\n🏭 测试铸币功能...");

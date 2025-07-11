@@ -12,12 +12,12 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const hre = require("hardhat");
 
-describe("Solidity调试方法演示", function () {
+describe("Solidity调试方法演示", () => {
   let token;
   let deployer, user1, user2;
   const decimals = 6;
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     [deployer, user1, user2] = await ethers.getSigners();
 
     // 🎯 断点位置1: 可以在这里设置断点查看账户信息
@@ -46,8 +46,8 @@ describe("Solidity调试方法演示", function () {
     console.log("  合约地址:", tokenAddress);
   });
 
-  describe("📍 方法1: JavaScript断点调试", function () {
-    it("演示VSCode断点调试", async function () {
+  describe("📍 方法1: JavaScript断点调试", () => {
+    it("演示VSCode断点调试", async () => {
       const amount = ethers.parseUnits("1000", decimals);
 
       // 🎯 断点位置A: 设置断点，查看执行前状态
@@ -86,8 +86,8 @@ describe("Solidity调试方法演示", function () {
     });
   });
 
-  describe("📍 方法2: Console.log调试（在合约中）", function () {
-    it("演示合约内console.log输出", async function () {
+  describe("📍 方法2: Console.log调试（在合约中）", () => {
+    it("演示合约内console.log输出", async () => {
       console.log("\n🔍 开始console.log调试演示");
       console.log("注意：以下输出来自合约内部的console.log");
 
@@ -104,12 +104,12 @@ describe("Solidity调试方法演示", function () {
     });
   });
 
-  describe("📍 方法3: 事件日志调试", function () {
-    it("演示通过事件进行调试", async function () {
+  describe("📍 方法3: 事件日志调试", () => {
+    it("演示通过事件进行调试", async () => {
       console.log("\n🔍 事件日志调试演示");
 
       // 监听事件
-      let events = [];
+      const events = [];
 
       token.on("BlacklistUpdated", (account, blacklisted, event) => {
         events.push({
@@ -156,8 +156,8 @@ describe("Solidity调试方法演示", function () {
     });
   });
 
-  describe("📍 方法4: 限制检查调试", function () {
-    it("演示ERC-1404限制检查调试", async function () {
+  describe("📍 方法4: 限制检查调试", () => {
+    it("演示ERC-1404限制检查调试", async () => {
       console.log("\n🔍 限制检查调试演示");
 
       const amount = ethers.parseUnits("300", decimals);
@@ -207,8 +207,8 @@ describe("Solidity调试方法演示", function () {
     });
   });
 
-  describe("📍 方法5: 断言调试", function () {
-    it("演示Assert断言调试", async function () {
+  describe("📍 方法5: 断言调试", () => {
+    it("演示Assert断言调试", async () => {
       console.log("\n🔍 断言调试演示");
 
       const amount = ethers.parseUnits("200", decimals);
@@ -261,8 +261,8 @@ describe("Solidity调试方法演示", function () {
     });
   });
 
-  describe("📍 综合调试演示", function () {
-    it("结合多种调试方法", async function () {
+  describe("📍 综合调试演示", () => {
+    it("结合多种调试方法", async () => {
       console.log("\n🎯 综合调试演示 - 结合多种方法");
 
       const amount = ethers.parseUnits("100", decimals);

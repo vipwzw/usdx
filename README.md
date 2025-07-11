@@ -125,10 +125,29 @@ scripts\setup-code-navigation.bat
 
 详细配置指南: [docs/SOLIDITY_CODE_NAVIGATION.md](docs/SOLIDITY_CODE_NAVIGATION.md)
 
+### 🎯 JavaScript 代码跳转设置
+
+支持完整的JavaScript代码导航功能，包括智能感知、函数跳转、变量追踪等：
+
+```bash
+# 自动配置已完成，直接使用
+code contracts/  # 在VSCode中打开项目
+```
+
+#### 功能特性
+- **函数跳转**: `Ctrl+Click` 或 `F12` 跳转到函数定义
+- **模块导入**: 智能跳转到导入的模块文件
+- **变量追踪**: 快速定位变量声明位置
+- **智能提示**: 自动完成和参数提示
+- **路径别名**: 支持 `@scripts/*`, `@test/*` 等路径别名
+
+详细配置指南: [docs/JAVASCRIPT_CODE_NAVIGATION.md](docs/JAVASCRIPT_CODE_NAVIGATION.md)
+
 ### 📋 技术文档
 - **[分支保护配置](docs/BRANCH_PROTECTION_GUIDE.md)** - GitHub分支保护规则设置
 - **[GitHub Actions权限配置](docs/GITHUB_ACTIONS_PERMISSIONS.md)** - CI/CD权限配置指南
 - **[Gas报告生成器](docs/GAS_REPORT_GUIDE.md)** - 智能合约Gas使用报告生成工具
+- **[JavaScript代码跳转](docs/JAVASCRIPT_CODE_NAVIGATION.md)** - JavaScript代码跳转和智能感知配置
 
 ### 📊 Gas使用分析
 
@@ -413,3 +432,140 @@ USDX完整实现ERC-1404标准，支持16种转账限制检测：
 [![Follow on GitHub](https://img.shields.io/github/followers/vipwzw?style=social)](https://github.com/vipwzw)
 
 </div> 
+
+### JavaScript调试 🔍
+
+项目提供完整的JavaScript调试环境，支持调试测试文件、部署脚本和其他JavaScript代码。
+
+#### 快速开始调试
+
+**Linux/macOS:**
+```bash
+# 启动调试环境
+./scripts/start-debug.sh
+```
+
+**Windows:**
+```cmd
+# 启动调试环境
+scripts\start-debug.bat
+```
+
+#### 可用的调试配置
+
+1. **Hardhat Test Debug** - 调试测试文件
+   - 打开测试文件（如 `test/USDXToken.test.js`）
+   - 设置断点
+   - 按 `F5` 开始调试
+
+2. **Deploy Script Debug** - 调试部署脚本
+   - 确保本地网络运行
+   - 打开脚本文件（如 `scripts/deploy.js`）
+   - 设置断点并调试
+
+3. **Debug Gas Report** - 调试Gas报告生成
+   - 直接调试 `scripts/generate-gas-report.js`
+
+4. **Debug Specific Test** - 调试特定测试用例
+   - 支持输入测试文件路径和匹配模式
+
+5. **Current Node.js File** - 调试当前文件
+   - 适用于调试任何JavaScript文件
+
+#### 调试操作
+
+| 快捷键         | 功能              |
+| -------------- | ----------------- |
+| `F5`           | 开始调试/继续执行 |
+| `Shift+F5`     | 停止调试          |
+| `F9`           | 切换断点          |
+| `F10`          | 单步执行（越过）  |
+| `F11`          | 单步执行（进入）  |
+| `Shift+F11`    | 单步执行（跳出）  |
+| `Ctrl+Shift+D` | 打开调试面板      |
+
+#### 调试示例
+
+```javascript
+// 在测试或脚本中设置断点
+const tx = await usdxToken.transfer(recipient, amount);
+console.log("Transaction:", tx); // 断点 - 查看交易对象
+const receipt = await tx.wait();
+console.log("Receipt:", receipt); // 断点 - 查看收据
+```
+
+#### 详细文档
+
+查看完整的调试指南：[JavaScript调试指南](docs/JAVASCRIPT_DEBUG_GUIDE.md)
+
+### Solidity单步调试 🔍
+
+项目提供完整的Solidity合约单步调试环境，支持交易级别的代码调试。
+
+#### 快速开始调试
+
+**获取调试交易哈希:**
+```bash
+# 运行调试演示脚本
+cd contracts
+npm run debug:solidity
+```
+
+**启动Hardhat调试器:**
+```bash
+# 使用输出的交易哈希进行调试
+npx hardhat debug <transaction_hash>
+```
+
+#### 调试器命令
+
+| 命令 | 功能 | 说明 |
+|------|------|------|
+| `n` | 下一步 | 执行下一行代码 |
+| `s` | 进入函数 | 进入函数内部调试 |
+| `o` | 跳出函数 | 跳出当前函数 |
+| `c` | 继续执行 | 继续到下一个断点 |
+| `p <变量>` | 打印变量 | 显示变量值 |
+| `st` | 堆栈跟踪 | 显示调用堆栈 |
+| `q` | 退出 | 退出调试器 |
+
+#### 可用npm调试命令
+
+```bash
+# Solidity调试演示
+npm run debug:solidity
+
+# 获取调试帮助
+npm run debug:hardhat
+
+# 带详细输出的测试
+npm run debug:console
+
+# 详细模式测试
+npm run debug:verbose
+```
+
+#### Console.log调试
+
+在Solidity合约中添加调试输出：
+
+```solidity
+import "hardhat/console.sol";
+
+function transfer(address to, uint256 amount) public override returns (bool) {
+    console.log("Transfer called");
+    console.log("From:", msg.sender);
+    console.log("To:", to);
+    console.log("Amount:", amount);
+    
+    bool result = super.transfer(to, amount);
+    console.log("Transfer result:", result);
+    return result;
+}
+```
+
+#### 详细文档
+
+查看完整的调试指南：
+- [JavaScript调试指南](docs/JAVASCRIPT_DEBUG_GUIDE.md)
+- [Solidity调试指南](docs/SOLIDITY_DEBUG_GUIDE.md) 

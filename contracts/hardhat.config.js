@@ -79,6 +79,8 @@ module.exports = {
       gas: 12000000,
       blockGasLimit: 12000000,
       gasPrice: 20000000000,
+      // 启用调试功能
+      loggingEnabled: true,
       accounts: {
         count: 20,
         accountsBalance: "10000000000000000000000", // 10000 ETH
@@ -277,8 +279,14 @@ module.exports = {
   // 默认网络
   defaultNetwork: "hardhat",
 
-  // 调试模式
+  // 调试模式和配置
   debug: process.env.DEBUG === "true",
+
+  // 调试器配置
+  debugger: {
+    enabled: true,
+    port: 8080,
+  },
 
   // 外部合约配置
   external: process.env.EXTERNAL_DEPLOYMENTS

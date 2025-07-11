@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@contracts/*": ["contracts/*"],
+      "@scripts/*": ["scripts/*"],
+      "@docs/*": ["docs/*"]
+    },
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "scripts/**/*",
+    "*.js",
+    "*.json"
+  ],
+  "exclude": [
+    "node_modules",
+    "contracts/node_modules",
+    "contracts/cache",
+    "contracts/artifacts",
+    "contracts/coverage",
+    "contracts/dist"
+  ],
+  "typeAcquisition": {
+    "enable": true,
+    "include": [
+      "node"
+    ]
+  }
+}

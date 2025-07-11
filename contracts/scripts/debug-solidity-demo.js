@@ -126,8 +126,8 @@ async function main() {
     console.log("3. 使用交易哈希进行调试");
     console.log("");
     console.log("📝 Console.log调试:");
-    console.log('1. 在Solidity代码中添加: import "hardhat/console.sol";');
-    console.log('2. 使用: console.log("Debug info:", variable);');
+    console.log('1. 在Solidity代码中添加: import "hardhat/console.sol";'); // eslint-disable-line quotes
+    console.log('2. 使用: console.log("Debug info:", variable);'); // eslint-disable-line quotes
     console.log("3. 重新编译和部署");
     console.log("");
     console.log("🎯 VSCode调试:");

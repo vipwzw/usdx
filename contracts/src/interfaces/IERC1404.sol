@@ -89,11 +89,14 @@ library RestrictionMessages {
         if (restrictionCode == RestrictionCodes.FAILURE) return "Transfer failed";
         if (restrictionCode == RestrictionCodes.BLACKLISTED_SENDER)
             return "Sender address is blacklisted";
-        if (restrictionCode == RestrictionCodes.BLACKLISTED_RECEIVER) return "Receiver blacklisted";
+        if (restrictionCode == RestrictionCodes.BLACKLISTED_RECEIVER)
+            return "Receiver address is blacklisted";
         if (restrictionCode == RestrictionCodes.INSUFFICIENT_BALANCE) return "Insufficient balance";
-        if (restrictionCode == RestrictionCodes.PAUSED) return "Contract paused";
-        if (restrictionCode == RestrictionCodes.INVALID_KYC_SENDER) return "Sender KYC invalid";
-        if (restrictionCode == RestrictionCodes.INVALID_KYC_RECEIVER) return "Receiver KYC invalid";
+        if (restrictionCode == RestrictionCodes.PAUSED) return "Contract is paused";
+        if (restrictionCode == RestrictionCodes.INVALID_KYC_SENDER)
+            return "Sender KYC not verified";
+        if (restrictionCode == RestrictionCodes.INVALID_KYC_RECEIVER)
+            return "Receiver KYC not verified";
         if (restrictionCode == RestrictionCodes.AMOUNT_EXCEEDS_LIMIT) return "Amount exceeds limit";
         if (restrictionCode == RestrictionCodes.SANCTIONED_ADDRESS) return "Address sanctioned";
         if (restrictionCode == RestrictionCodes.UNAUTHORIZED_TRANSFER)
