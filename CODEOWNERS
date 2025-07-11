@@ -1,0 +1,53 @@
+# CODEOWNERS文件
+# 定义代码审查责任人
+# 参考: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# 默认代码所有者 - 需要替换为实际的GitHub用户名
+* @vipwzw
+
+# 智能合约核心代码 - 需要安全专家审查
+/contracts/src/ @vipwzw
+/contracts/src/USDXToken.sol @vipwzw
+/contracts/src/USDXGovernance.sol @vipwzw
+/contracts/src/interfaces/ @vipwzw
+
+# 测试代码 - 需要测试专家审查
+/contracts/test/ @vipwzw
+
+# 部署和脚本 - 需要DevOps专家审查
+/scripts/ @vipwzw
+/contracts/scripts/ @vipwzw
+
+# CI/CD配置 - 需要DevOps专家审查
+/.github/ @vipwzw
+/.github/workflows/ @vipwzw
+
+# 安全相关配置
+/contracts/hardhat.config.js @vipwzw
+/contracts/local-config.js @vipwzw
+
+# 文档 - 需要技术文档专家审查
+/docs/ @vipwzw
+/README.md @vipwzw
+/USDX_Executive_Summary.md @vipwzw
+/USDX_Stablecoin_Project_Proposal.md @vipwzw
+/PROJECT_REQUIREMENTS.md @vipwzw
+/PROJECT_RULES.md @vipwzw
+
+# 包管理文件 - 需要DevOps专家审查
+/contracts/package.json @vipwzw
+/contracts/package-lock.json @vipwzw
+
+# 环境配置文件 - 需要DevOps专家审查
+/env.example @vipwzw
+/contracts/env.example @vipwzw
+
+# VSCode配置 - 需要开发环境专家审查
+/.vscode/ @vipwzw
+
+# Makefile - 需要DevOps专家审查
+/Makefile @vipwzw
+
+# 许可证和安全文件
+/LICENSE @vipwzw
+/.github/SECURITY.md @vipwzw
