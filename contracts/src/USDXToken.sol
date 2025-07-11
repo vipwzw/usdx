@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+/* solhint-disable max-states-count */
+
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC20PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -78,10 +80,18 @@ contract USDXToken is
     uint8 public constant AMOUNT_EXCEEDS_LIMIT = 8;
     /// @notice Restriction code for sanctioned address
     uint8 public constant SANCTIONED_ADDRESS = 9;
+    /// @notice Restriction code for unauthorized transfer
+    uint8 public constant UNAUTHORIZED_TRANSFER = 10;
+    /// @notice Restriction code for invalid recipient
+    uint8 public constant INVALID_RECIPIENT = 11;
+    /// @notice Restriction code when transfer is locked
+    uint8 public constant TRANSFER_LOCKED = 12;
+    /// @notice Restriction code for compliance violation
+    uint8 public constant COMPLIANCE_VIOLATION = 13;
     /// @notice Restriction code when holder limit exceeded
-    uint8 public constant EXCEEDS_HOLDER_LIMIT = 10;
+    uint8 public constant EXCEEDS_HOLDER_LIMIT = 14;
     /// @notice Restriction code for region restrictions
-    uint8 public constant REGION_RESTRICTION = 11;
+    uint8 public constant REGION_RESTRICTION = 15;
 
     // State variables
     mapping(address => bool) private _blacklisted;
@@ -91,6 +101,14 @@ contract USDXToken is
     mapping(address => uint256) private _dailyTransferAmount;
     mapping(address => uint256) private _lastTransferDay;
     mapping(address => uint256) private _regionCode;
+    mapping(uint256 => bool) private _allowedRegions;
+
+    // Additional restriction state variables
+    mapping(address => bool) private _transferLocked;
+    mapping(address => bool) private _authorizedSenders;
+    mapping(address => bool) private _validRecipients;
+    bool private _transferAuthorizationRequired;
+    bool private _recipientValidationRequired;
 
     uint256 private _maxTransferAmount;
     uint256 private _minTransferAmount;
@@ -214,6 +232,33 @@ contract USDXToken is
         address to,
         uint256 value
     ) public view override returns (uint8) {
+        // Check basic restrictions first
+        uint8 basicCheck = _checkBasicRestrictions(from, to, value);
+        if (basicCheck != SUCCESS) {
+            return basicCheck;
+        }
+
+        // Check advanced restrictions
+        uint8 advancedCheck = _checkAdvancedRestrictions(from, to, value);
+        if (advancedCheck != SUCCESS) {
+            return advancedCheck;
+        }
+
+        return SUCCESS;
+    }
+
+    /**
+     * @notice Check basic transfer restrictions
+     * @param from Sender address
+     * @param to Recipient address
+     * @param value Transfer amount
+     * @return Restriction code (0 = allowed)
+     */
+    function _checkBasicRestrictions(
+        address from,
+        address to,
+        uint256 value
+    ) internal view returns (uint8) {
         // Check if contract is paused
         if (paused()) {
             return PAUSED;
@@ -247,11 +292,23 @@ contract USDXToken is
             return INSUFFICIENT_BALANCE;
         }
 
+        return SUCCESS;
+    }
+
+    /**
+     * @notice Check advanced transfer restrictions
+     * @param from Sender address
+     * @param to Recipient address
+     * @param value Transfer amount
+     * @return Restriction code (0 = allowed)
+     */
+    function _checkAdvancedRestrictions(
+        address from,
+        address to,
+        uint256 value
+    ) internal view returns (uint8) {
         // Check transfer limits
-        if (value > _maxTransferAmount) {
-            return AMOUNT_EXCEEDS_LIMIT;
-        }
-        if (value < _minTransferAmount) {
+        if (value > _maxTransferAmount || value < _minTransferAmount) {
             return AMOUNT_EXCEEDS_LIMIT;
         }
 
@@ -263,6 +320,26 @@ contract USDXToken is
         // Check holder count limits (for new holders)
         if (to != address(0) && balanceOf(to) == 0 && _currentHolderCount >= _maxHolderCount) {
             return EXCEEDS_HOLDER_LIMIT;
+        }
+
+        // Check if transfers are locked for sender or receiver
+        if (_transferLocked[from] || _transferLocked[to]) {
+            return TRANSFER_LOCKED;
+        }
+
+        // Check transfer authorization requirements
+        if (_transferAuthorizationRequired && from != address(0) && !_authorizedSenders[from]) {
+            return UNAUTHORIZED_TRANSFER;
+        }
+
+        // Check recipient validation requirements
+        if (_recipientValidationRequired && to != address(0) && !_validRecipients[to]) {
+            return INVALID_RECIPIENT;
+        }
+
+        // Check for compliance violations
+        if (_hasComplianceViolation(from, to, value)) {
+            return COMPLIANCE_VIOLATION;
         }
 
         // Check region restrictions
@@ -435,6 +512,125 @@ contract USDXToken is
     }
 
     /**
+     * @notice Sets the maximum number of token holders allowed
+     * @param maxHolders Maximum number of holders
+     */
+    function setMaxHolderCount(uint256 maxHolders) external onlyRole(COMPLIANCE_ROLE) {
+        _maxHolderCount = maxHolders;
+        emit HolderLimitsUpdated(maxHolders);
+    }
+
+    /**
+     * @notice Enables or disables region restrictions
+     * @param enabled Whether region restrictions should be enabled
+     */
+    function setRegionRestrictionsEnabled(bool enabled) external onlyRole(COMPLIANCE_ROLE) {
+        _regionRestrictionsEnabled = enabled;
+        emit ComplianceConfigUpdated(_kycRequired, _whitelistEnabled, enabled);
+    }
+
+    /**
+     * @notice Sets the region code for an address
+     * @param account Address to set region code for
+     * @param regionCode Region code (999 = restricted region)
+     */
+    function setRegionCode(address account, uint256 regionCode) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _regionCode[account] = regionCode;
+    }
+
+    /**
+     * @notice Sets transfer amount limits
+     * @param maxAmount Maximum transfer amount
+     * @param minAmount Minimum transfer amount
+     */
+    function setTransferLimits(
+        uint256 maxAmount,
+        uint256 minAmount
+    ) external onlyRole(COMPLIANCE_ROLE) {
+        if (maxAmount < minAmount) {
+            revert("Max amount must be greater than min amount");
+        }
+        _maxTransferAmount = maxAmount;
+        _minTransferAmount = minAmount;
+        emit TransferLimitsUpdated(maxAmount, minAmount);
+    }
+
+    /**
+     * @notice Sets compliance configuration
+     * @param kycRequired Whether KYC verification is required
+     * @param whitelistEnabled Whether whitelist is enabled
+     * @param regionRestricted Whether region restrictions are enabled
+     */
+    function setComplianceConfig(
+        bool kycRequired,
+        bool whitelistEnabled,
+        bool regionRestricted
+    ) external onlyRole(COMPLIANCE_ROLE) {
+        _kycRequired = kycRequired;
+        _whitelistEnabled = whitelistEnabled;
+        _regionRestrictionsEnabled = regionRestricted;
+        emit ComplianceConfigUpdated(kycRequired, whitelistEnabled, regionRestricted);
+    }
+
+    /**
+     * @notice Sets transfer lock status for an address
+     * @param account Address to lock/unlock
+     * @param locked Whether transfers should be locked
+     */
+    function setTransferLocked(address account, bool locked) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _transferLocked[account] = locked;
+    }
+
+    /**
+     * @notice Sets transfer authorization requirement
+     * @param required Whether transfer authorization is required
+     */
+    function setTransferAuthorizationRequired(bool required) external onlyRole(COMPLIANCE_ROLE) {
+        _transferAuthorizationRequired = required;
+    }
+
+    /**
+     * @notice Sets authorized sender status
+     * @param account Address to authorize/deauthorize
+     * @param authorized Whether the address is authorized to send
+     */
+    function setAuthorizedSender(
+        address account,
+        bool authorized
+    ) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _authorizedSenders[account] = authorized;
+    }
+
+    /**
+     * @notice Sets recipient validation requirement
+     * @param required Whether recipient validation is required
+     */
+    function setRecipientValidationRequired(bool required) external onlyRole(COMPLIANCE_ROLE) {
+        _recipientValidationRequired = required;
+    }
+
+    /**
+     * @notice Sets valid recipient status
+     * @param account Address to validate/invalidate
+     * @param valid Whether the address is a valid recipient
+     */
+    function setValidRecipient(address account, bool valid) external onlyRole(COMPLIANCE_ROLE) {
+        if (account == address(0)) {
+            revert CannotSetLimitForZeroAddress();
+        }
+        _validRecipients[account] = valid;
+    }
+
+    /**
      * @notice Pauses all token transfers
      */
     function pause() external onlyRole(PAUSER_ROLE) {
@@ -474,9 +670,63 @@ contract USDXToken is
      * @return True if restricted
      */
     function _isRegionRestricted(address from, address to) internal view returns (bool) {
-        // Implementation depends on specific regional requirements
-        // For demo, we'll check if addresses have restricted region codes
-        return _regionCode[from] == 999 || _regionCode[to] == 999;
+        // Skip region check for zero address (mint/burn operations)
+        if (from == address(0) || to == address(0)) {
+            return false;
+        }
+
+        // Both from and to must be in the allowed region list
+        if (!_allowedRegions[_regionCode[from]] || !_allowedRegions[_regionCode[to]]) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @notice Sets allowed region status
+     * @param regionCode The region code to allow or disallow
+     * @param allowed Whether the region is allowed
+     */
+    function setAllowedRegion(uint256 regionCode, bool allowed) external onlyRole(COMPLIANCE_ROLE) {
+        _allowedRegions[regionCode] = allowed;
+    }
+
+    /**
+     * @notice Checks for compliance violations
+     * @param from Sender address
+     * @param to Recipient address
+     * @param value Transfer amount
+     * @return True if there's a compliance violation
+     */
+    function _hasComplianceViolation(
+        address from,
+        address to,
+        uint256 value
+    ) internal view returns (bool) {
+        // Check for various compliance violations
+
+        // Example 1: Large transfers to new accounts without proper verification
+        if (
+            value > _maxTransferAmount / 2 &&
+            to != address(0) &&
+            balanceOf(to) == 0 &&
+            !_kycVerified[to]
+        ) {
+            return true;
+        }
+
+        // Example 2: Very large transfers (>75% of max) even to verified accounts (suspicious activity)
+        if (value > (_maxTransferAmount * 3) / 4 && to != address(0) && balanceOf(to) == 0) {
+            return true;
+        }
+
+        // Example 3: Suspicious patterns from sender (could be extended)
+        if (from != address(0) && _dailyTransferAmount[from] > 0) {
+            // Additional compliance checks could be added here
+            // Currently just acknowledging the from parameter to avoid unused variable warning
+        }
+
+        return false;
     }
 
     /**
@@ -505,14 +755,24 @@ contract USDXToken is
      * @param amount Transfer amount
      */
     function _updateHolderCount(address from, address to, uint256 amount) internal {
-        // Check if recipient becomes a new holder
-        if (to != address(0) && balanceOf(to) == amount && from != address(0)) {
+        // For minting (from == address(0)), only check if recipient becomes new holder
+        if (from == address(0) && to != address(0) && balanceOf(to) == 0) {
             _currentHolderCount++;
         }
-
-        // Check if sender is no longer a holder
-        if (from != address(0) && balanceOf(from) == 0 && to != address(0)) {
+        // For burning (to == address(0)), only check if sender loses all tokens
+        else if (to == address(0) && from != address(0) && balanceOf(from) == amount) {
             _currentHolderCount--;
+        }
+        // For regular transfers
+        else if (from != address(0) && to != address(0)) {
+            // Check if recipient becomes a new holder (balance was 0 before transfer)
+            if (balanceOf(to) == 0) {
+                _currentHolderCount++;
+            }
+            // Check if sender will no longer be a holder (balance will be 0 after transfer)
+            if (balanceOf(from) == amount) {
+                _currentHolderCount--;
+            }
         }
     }
 
@@ -522,7 +782,10 @@ contract USDXToken is
      */
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyRole(UPGRADER_ROLE) {}
+    ) internal override onlyRole(UPGRADER_ROLE) {
+        // Only UPGRADER_ROLE can upgrade - implementation address validation handled by OpenZeppelin
+        // solhint-disable-next-line no-empty-blocks
+    }
 
     // View functions for getting restriction states
 
@@ -551,6 +814,40 @@ contract USDXToken is
      */
     function isSanctioned(address account) external view returns (bool) {
         return _sanctioned[account];
+    }
+
+    /**
+     * @notice Checks if an address is a valid recipient
+     * @param account Address to check
+     * @return True if the address is a valid recipient
+     */
+    function isValidRecipient(address account) external view returns (bool) {
+        return _validRecipients[account];
+    }
+
+    /**
+     * @notice Checks if recipient validation is required
+     * @return True if recipient validation is required
+     */
+    function isRecipientValidationRequired() external view returns (bool) {
+        return _recipientValidationRequired;
+    }
+
+    /**
+     * @notice Checks if an address is an authorized sender
+     * @param account Address to check
+     * @return True if the address is an authorized sender
+     */
+    function isAuthorizedSender(address account) external view returns (bool) {
+        return _authorizedSenders[account];
+    }
+
+    /**
+     * @notice Checks if transfer authorization is required
+     * @return True if transfer authorization is required
+     */
+    function isTransferAuthorizationRequired() external view returns (bool) {
+        return _transferAuthorizationRequired;
     }
 
     /**
@@ -625,5 +922,23 @@ contract USDXToken is
      */
     function isRegionRestrictionsEnabled() external view returns (bool) {
         return _regionRestrictionsEnabled;
+    }
+
+    /**
+     * @notice Gets the region code for an address
+     * @param account Address to check
+     * @return The region code for the address
+     */
+    function getRegionCode(address account) external view returns (uint256) {
+        return _regionCode[account];
+    }
+
+    /**
+     * @notice Checks if a region code is allowed
+     * @param regionCode Region code to check
+     * @return True if the region is allowed
+     */
+    function isRegionAllowed(uint256 regionCode) external view returns (bool) {
+        return _allowedRegions[regionCode];
     }
 }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+/* solhint-disable one-contract-per-file */
+
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
@@ -84,6 +86,7 @@ library RestrictionMessages {
      * @param restrictionCode The restriction code
      * @return A human-readable message
      */
+    // solhint-disable-next-line code-complexity
     function messageForCode(uint8 restrictionCode) internal pure returns (string memory) {
         if (restrictionCode == RestrictionCodes.SUCCESS) return "Transfer allowed";
         if (restrictionCode == RestrictionCodes.FAILURE) return "Transfer failed";

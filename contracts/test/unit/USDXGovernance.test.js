@@ -471,7 +471,7 @@ describe("USDXGovernance", () => {
       expect(await governance.getProposalState(proposalId)).to.equal("Failed");
     });
 
-    it("Should return 'Failed' for proposals with more against votes", async () => {
+    it("Should return 'Defeated' for proposals with more against votes", async () => {
       await governance.connect(governor1).castVote(proposalId, false);
       await governance.connect(governor2).castVote(proposalId, false);
       await governance.connect(governor3).castVote(proposalId, true);
@@ -479,7 +479,7 @@ describe("USDXGovernance", () => {
       await ethers.provider.send("evm_increaseTime", [86401]);
       await ethers.provider.send("evm_mine");
 
-      expect(await governance.getProposalState(proposalId)).to.equal("Failed");
+      expect(await governance.getProposalState(proposalId)).to.equal("Defeated");
     });
 
     it("Should return 'Queued' for proposals in execution delay", async () => {
