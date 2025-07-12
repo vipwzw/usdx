@@ -24,22 +24,22 @@ async function main() {
   const deploymentData = JSON.parse(fs.readFileSync(deploymentFile, "utf8"));
   const { contracts, configuration: _configuration } = deploymentData;
 
-  // Verify USDT Token Contract
+  // Verify USDX Token Contract
   try {
-    console.log("\n--- Verifying USDT Token Contract ---");
-    console.log(`Contract Address: ${contracts.usdtToken.address}`);
-    console.log(`Implementation Address: ${contracts.usdtToken.implementation}`);
+    console.log("\n--- Verifying USDX Token Contract ---");
+    console.log(`Contract Address: ${contracts.usdxToken.address}`);
+    console.log(`Implementation Address: ${contracts.usdxToken.implementation}`);
 
     // Verify the implementation contract
     await hre.run("verify:verify", {
-      address: contracts.usdtToken.implementation,
+      address: contracts.usdxToken.implementation,
       constructorArguments: [],
-      contract: "contracts/src/USDTToken.sol:USDTToken",
+      contract: "contracts/src/USDXToken.sol:USDXToken",
     });
 
-    console.log("✅ USDT Token contract verified successfully");
+    console.log("✅ USDX Token contract verified successfully");
   } catch (error) {
-    console.error("❌ USDT Token verification failed:");
+    console.error("❌ USDX Token verification failed:");
     console.error(error.message);
 
     // Don't exit, continue with other contracts
@@ -55,7 +55,7 @@ async function main() {
     await hre.run("verify:verify", {
       address: contracts.governance.implementation,
       constructorArguments: [],
-      contract: "contracts/src/USDTGovernance.sol:USDTGovernance",
+      contract: "contracts/src/USDXGovernance.sol:USDXGovernance",
     });
 
     console.log("✅ Governance contract verified successfully");
@@ -72,7 +72,7 @@ async function main() {
 
   console.log("\n=== Verification Summary ===");
   console.log(`Network: ${networkName}`);
-  console.log(`USDT Token: ${contracts.usdtToken.address}`);
+  console.log(`USDX Token: ${contracts.usdxToken.address}`);
   console.log(`Governance: ${contracts.governance.address}`);
   console.log("\nVerification completed! Check the block explorer for verified contracts.");
 }
@@ -87,7 +87,7 @@ async function verifyProxyContracts(contracts) {
     console.log("Proxy contracts are using OpenZeppelin's ERC1967 standard");
     console.log("These are typically auto-verified by block explorers");
     console.log("If manual verification is needed, use the proxy addresses:");
-    console.log(`USDT Token Proxy: ${contracts.usdtToken.address}`);
+    console.log(`USDX Token Proxy: ${contracts.usdxToken.address}`);
     console.log(`Governance Proxy: ${contracts.governance.address}`);
   } catch (error) {
     console.error("Error with proxy verification:", error.message);
@@ -99,10 +99,10 @@ function generateVerificationReport(contracts, networkName) {
     network: networkName,
     timestamp: new Date().toISOString(),
     contracts: {
-      usdtToken: {
-        proxy: contracts.usdtToken.address,
-        implementation: contracts.usdtToken.implementation,
-        proxyAdmin: contracts.usdtToken.proxyAdmin,
+      usdxToken: {
+        proxy: contracts.usdxToken.address,
+        implementation: contracts.usdxToken.implementation,
+        proxyAdmin: contracts.usdxToken.proxyAdmin,
         verified: true, // This would be set based on actual verification results
       },
       governance: {
@@ -137,8 +137,8 @@ function generateVerificationUrls(contracts, networkName) {
   }
 
   return {
-    usdtTokenProxy: `${baseUrl}${contracts.usdtToken.address}`,
-    usdtTokenImplementation: `${baseUrl}${contracts.usdtToken.implementation}`,
+    usdxTokenProxy: `${baseUrl}${contracts.usdxToken.address}`,
+    usdxTokenImplementation: `${baseUrl}${contracts.usdxToken.implementation}`,
     governanceProxy: `${baseUrl}${contracts.governance.address}`,
     governanceImplementation: `${baseUrl}${contracts.governance.implementation}`,
   };
@@ -168,21 +168,21 @@ async function verifyAllContracts(deploymentFile) {
 
   const results = [];
 
-  // Verify USDT Token implementation
-  const usdtResult = await verifyContract(
-    contracts.usdtToken.implementation,
+  // Verify USDX Token implementation
+  const usdxResult = await verifyContract(
+    contracts.usdxToken.implementation,
     [],
-    "contracts/src/USDTToken.sol:USDTToken",
+    "contracts/src/USDXToken.sol:USDXToken",
   );
-  results.push({ name: "USDTToken", success: usdtResult });
+  results.push({ name: "USDXToken", success: usdxResult });
 
   // Verify Governance implementation
   const governanceResult = await verifyContract(
     contracts.governance.implementation,
     [],
-    "contracts/src/USDTGovernance.sol:USDTGovernance",
+    "contracts/src/USDXGovernance.sol:USDXGovernance",
   );
-  results.push({ name: "USDTGovernance", success: governanceResult });
+  results.push({ name: "USDXGovernance", success: governanceResult });
 
   // Print summary
   console.log("\n=== Verification Results ===");
@@ -200,20 +200,20 @@ async function verifySpecificContract(contractName, deploymentFile) {
   const { contracts } = deploymentData;
 
   switch (contractName.toLowerCase()) {
-    case "usdttoken":
+    case "usdxtoken":
     case "token":
       return await verifyContract(
-        contracts.usdtToken.implementation,
+        contracts.usdxToken.implementation,
         [],
-        "contracts/src/USDTToken.sol:USDTToken",
+        "contracts/src/USDXToken.sol:USDXToken",
       );
 
     case "governance":
-    case "usdtgovernance":
+    case "usdxgovernance":
       return await verifyContract(
         contracts.governance.implementation,
         [],
-        "contracts/src/USDTGovernance.sol:USDTGovernance",
+        "contracts/src/USDXGovernance.sol:USDXGovernance",
       );
 
     default:

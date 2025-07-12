@@ -3,7 +3,7 @@ const fs = require("fs");
 const _path = require("path");
 
 /**
- * USDT Stablecoin Monitoring System
+ * USDX Stablecoin Monitoring System
  *
  * This script monitors contract activities and generates alerts:
  * - Transfer monitoring
@@ -22,7 +22,7 @@ class ContractMonitor {
     this.governance = null;
     this.lastProcessedBlock = null;
     this.alertThresholds = {
-      largeTransfer: ethers.utils.parseUnits("1000000", 6), // 1M USDT
+      largeTransfer: ethers.utils.parseUnits("1000000", 6), // 1M USDX
       rapidTransfers: 100, // 100 transfers in monitoring period
       holderCountChange: 50, // 50 new holders
       governanceVotes: 5, // 5 votes in period
@@ -41,8 +41,8 @@ class ContractMonitor {
     console.log("🔍 Initializing Contract Monitor...");
 
     // Connect to contracts
-    this.token = await ethers.getContractAt("USDTToken", this.tokenAddress);
-    this.governance = await ethers.getContractAt("USDTGovernance", this.governanceAddress);
+    this.token = await ethers.getContractAt("USDXToken", this.tokenAddress);
+    this.governance = await ethers.getContractAt("USDXGovernance", this.governanceAddress);
 
     // Get latest block
     this.lastProcessedBlock = await ethers.provider.getBlockNumber();
@@ -78,7 +78,7 @@ class ContractMonitor {
       if (value.gte(this.alertThresholds.largeTransfer)) {
         this.addAlert(
           "LARGE_TRANSFER",
-          `Large transfer detected: ${transfer.valueFormatted} USDT`,
+          `Large transfer detected: ${transfer.valueFormatted} USDX`,
           transfer,
         );
       }
@@ -87,7 +87,7 @@ class ContractMonitor {
       if (from === ethers.constants.AddressZero) {
         this.addAlert(
           "MINT_DETECTED",
-          `Mint detected: ${transfer.valueFormatted} USDT to ${to}`,
+          `Mint detected: ${transfer.valueFormatted} USDX to ${to}`,
           transfer,
         );
       }
@@ -95,7 +95,7 @@ class ContractMonitor {
       if (to === ethers.constants.AddressZero) {
         this.addAlert(
           "BURN_DETECTED",
-          `Burn detected: ${transfer.valueFormatted} USDT from ${from}`,
+          `Burn detected: ${transfer.valueFormatted} USDX from ${from}`,
           transfer,
         );
       }
