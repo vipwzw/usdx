@@ -26,6 +26,8 @@
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "deploy:goerli": "hardhat run scripts/deploy.js --network goerli",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network mainnet",
+    "test:env": "hardhat run scripts/test-env.js --network sepolia",
+    "check:balance": "hardhat run scripts/check-balance.js --network sepolia",
     "verify": "hardhat run scripts/verify.js",
     "verify:sepolia": "hardhat run scripts/verify.js --network sepolia",
     "verify:goerli": "hardhat run scripts/verify.js --network goerli",
