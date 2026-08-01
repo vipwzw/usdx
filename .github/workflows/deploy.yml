@@ -190,7 +190,7 @@ jobs:
         npm install
 
     - name: Download deployment artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
       with:
         name: deployment-${{ github.event.inputs.network }}-${{ github.run_number }}
         path: contracts/
